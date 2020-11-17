@@ -24,6 +24,7 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 14. Navigate back to `./PicassoRun/Windows/`. We can now start the program. Run `runServer.bat` to start the Picasso server, then run `runClient.bat` to run the Picasso client. A GUI should pop up. Click on `Enter`, and enter the connection details (`localhost` and port `4444` by default).
 15. The Picasso client GUI should appear. We need to create a new connection to our TPC-H database. In the top menu, click on `DBConnection`, then click `New`. The DB Connection Settings window should pop up.
 16. Fill in the following details:
+
 - Connection details: TPC-H (Arbitrary name to save this connection for use next time)
 - Machine: localhost (Where your database is running on)
 - Engine: POSTGRES (Which JDBC engine to use to connect to your database)
@@ -32,3 +33,6 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 - Schema: public (Default schema for the database)
 - User: postgres (Your user that owns the database, default root user is postgres)
 - Password: \*\*\*\*\*\*\* (Your login password for user postgres)
+  Click on `Save`.
+
+17. Now that we've created our connection profile, go to the orange `Settings` pane. Choose your new connection under `DBConnection Descriptor:`. For example, if you've named the connection you just created TPC-H, select that. Picasso then attempts to connect to the database, and prints `STATUS: DONE` at the bottom if it suceeds. If the server terminal window outputs errors about 'Authentication type 10 not supported', go back to step 12 to update your JDBC driver.
