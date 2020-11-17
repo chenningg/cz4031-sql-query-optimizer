@@ -14,4 +14,5 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 4. Open your terminal and run `psql -U postgres -f dss.ddl TPC-H` from the cloned repository's folder. This command connects you to Postgresql as the default user `postgres`, and runs the SQL commands found in dss.ddl on the database `TPC-H`. The commands will initialize empty tables in the database similar to the ones shown in the image at the top.
 5. After the tables are created, run `psql -U postgres -f dss.ri TPC-H`. This command will create the constraints on the tables, including initializing the primary keys and foreign keys on the various tables.
 6. Navigate back to the pgAdmin interface. Right click each table and click on `Import/Export`. Import the corresponding csv file into each table, with the format set to `csv` and encoding set to `UTF-8`. Set the delimeter to `|` and click OK to import the data.
+
    You can find the relevant csv files in this [Google drive](https://drive.google.com/drive/folders/1i7FYWI1ePuFFZpMdRO7gwVD2lLw_j03B?usp=sharing).
