@@ -23,8 +23,7 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 13. Navigate to `./Libraries/` and find the jar file for the old JDBC driver for Postgresql. It should be named something like `postgresql-8.0-311.jdbc3`. Replace this file with the latest version that you just downloaded. Rename it so it matches the old name (e.g. `postgresql-8.0-311.jdbc3`) exactly, so that Picasso can detect it.
 14. Navigate back to `./PicassoRun/Windows/`. We can now start the program. Run `runServer.bat` to start the Picasso server, then run `runClient.bat` to run the Picasso client. A GUI should pop up. Click on `Enter`, and enter the connection details (`localhost` and port `4444` by default).
 15. The Picasso client GUI should appear. We need to create a new connection to our TPC-H database. In the top menu, click on `DBConnection`, then click `New`. The DB Connection Settings window should pop up.
-16. Fill in the follow details:
-
+16. Fill in the following details:
 - Connection details: TPC-H (Arbitrary name to save this connection for use next time)
 - Machine: localhost (Where your database is running on)
 - Engine: POSTGRES (Which JDBC engine to use to connect to your database)
