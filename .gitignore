@@ -1,6 +1,6 @@
 # Ignore picasso
 picasso2.1/
-csv_tables/
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
