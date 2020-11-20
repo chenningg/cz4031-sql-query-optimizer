@@ -15,7 +15,8 @@
 
 hr {
   height: 1px;
-  width: 100%;
+  width: 95%;
+  margin: 0 auto;
   background-color: #e4e7ed;
 }
 
