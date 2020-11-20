@@ -1,0 +1,103 @@
+/* Layout */
+
+.main-wrapper {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.section {
+  width: 100%;
+  margin: 0 auto;
+  display: block;
+  padding: 1rem;
+}
+
+hr {
+  height: 1px;
+  width: 100%;
+  background-color: #e4e7ed;
+}
+
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-item {
+  min-width: 250px;
+  flex-grow: 1;
+  margin: 1rem;
+}
+
+/* Forms */
+
+button {
+  background-color: #3b81ed;
+  color: white;
+  font-weight: bold;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.4rem;
+  border: none;
+}
+
+button:hover {
+  background-color: #4b8aeb;
+  cursor: pointer;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  min-height: 300px;
+  border: 1px solid #dfe2e8;
+  margin-bottom: 1.3rem;
+  padding: 0.8rem;
+  resize: none;
+}
+
+textarea:focus {
+  border-color: #3b81ed;
+}
+
+textarea:read-only {
+  background-color: #f5f7fa;
+  cursor: default;
+}
+
+/* Typography */
+
+h1 {
+  font-size: 2.3rem;
+  font-weight: 900;
+  color: #0c0c0d;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0c0c0d;
+  margin-bottom: 1.2rem;
+  text-align: left;
+}
+
+h3 {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: #2e3438;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+p {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: black;
+  margin-bottom: 1rem;
+  font-family: Times New Roman, Georgia, serif;
+}
