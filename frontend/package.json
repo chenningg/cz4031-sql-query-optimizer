@@ -12,7 +12,8 @@
     "web-vitals": "^0.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "concurrently \"react-scripts start\" \"yarn start-api\"",
+    "start-api": "cd ../api && poetry run flask run",
     "build": "yarn clean && react-scripts build",
     "clean": "rimraf ./build",
     "test": "react-scripts test",
@@ -33,6 +34,8 @@
     "development": []
   },
   "devDependencies": {
+    "concurrently": "^5.3.0",
     "rimraf": "^3.0.2"
-  }
+  },
+  "proxy": "http://localhost:5000"
 }
