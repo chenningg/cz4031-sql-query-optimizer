@@ -10,12 +10,10 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 
 First, clone this repository to a local folder on your computer. This repository contains two main folders - the `/api` backend (server), and the `/frontend` (client). To ensure that this project runs correctly, kindly head into each folder and follow the installation and setup instructions in their respective READMEs.
 
-Other than the instructions in those two folders, the following setup instructions below are only required if you:
+Other than the instructions in those two folders, the following setup instructions below are required if you:
 
 - Have not installed Postgresql on your computer.
 - Have not generated a set of [TPC-H](http://www.tpc.org/tpch/) dummy data and populated a Postgresql database with it.
-
-Additionally, if you wish to use [Picasso](https://dsl.cds.iisc.ac.in/projects/PICASSO/picasso_download/license.htm), a DBMS query optimization visualizer, you may follow the setup instructions below as well. This is optional and NOT required for this project to function correctly.
 
 ## Setting up Postgresql and the TPC-H dataset
 
@@ -28,6 +26,8 @@ Additionally, if you wish to use [Picasso](https://dsl.cds.iisc.ac.in/projects/P
 7. Once all data has been imported, right click each table and verify that the data has been correctly imported by clicking `View/Edit Data` > `First 100 Rows`.
 8. If all the data seems correct, run `psql -U postgres -f dss.ri TPC-H` in your terminal. This command will create the constraints on the tables, including initializing the primary keys and foreign keys on the various tables.
 9. Next, right click each table within pgAdmin and click on `Maintenance`. Tick `Vaccuum`, and turn `Analyze` and `Verbose Messages` on. Run this for each table.
+
+Additionally, if you wish to use [Picasso](https://dsl.cds.iisc.ac.in/projects/PICASSO/picasso_download/license.htm), a DBMS query optimization visualizer, you may follow the setup instructions below as well. This is optional and NOT required for this project to function correctly.
 
 ## Setting up Picasso (DBMS query optimization visualizer)
 
