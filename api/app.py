@@ -15,7 +15,6 @@ def hello():
 def get_plans():
     # Gets the SQL query from the frontend
     data = request.json
-    query = data["query"]
 
     # Absolute filepath to run Picasso command line utility from
     filepath = (
@@ -23,4 +22,4 @@ def get_plans():
         + "\picasso2.1\PicassoRun\Windows\PicassoCmd"
     )
 
-    return query
+    return data
