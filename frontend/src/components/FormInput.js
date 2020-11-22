@@ -20,7 +20,7 @@ const FormInput = () => {
     event.preventDefault();
     setOutput("Generating output...")
 
-    axios.post("/test", input)
+    axios.post("/generate", input)
     .then((response) => {
       setOutput(response.data);
     })
