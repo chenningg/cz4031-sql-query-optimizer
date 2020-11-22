@@ -1,4 +1,4 @@
-# API
+<h1 align="center">API</h1>
 
 This is the backend of our SQL query optimization visualizer.
 
