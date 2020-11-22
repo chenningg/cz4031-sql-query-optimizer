@@ -8,6 +8,17 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 
 ## Installation and setup
 
+First, clone this repository to a local folder on your computer. This repository contains two main folders - the `/api` backend (server), and the `/frontend` (client). To ensure that this project runs correctly, kindly head into each folder and follow the installation and setup instructions in their respective READMEs.
+
+Other than the instructions in those two folders, the following setup instructions below are only required if you:
+
+- Have not installed Postgresql on your computer.
+- Have not generated a set of [TPC-H](http://www.tpc.org/tpch/) dummy data and populated a Postgresql database with it.
+
+Additionally, if you wish to use [Picasso](https://dsl.cds.iisc.ac.in/projects/PICASSO/picasso_download/license.htm), a DBMS query optimization visualizer, you may follow the setup instructions below as well. This is optional and NOT required for this project to function correctly.
+
+## Setting up Postgresql and the TPC-H dataset
+
 1. Ensure that you have [Postgresql](https://www.postgresql.org/download/) installed. This project may work on other databases, but has only been tested on Postgresql.
 2. Run [pgAdmin](https://www.pgadmin.org/), which should come bundled in the Postgresql installation. If it's your first time accessing it, it will prompt you to create a root user and password - name this user `postgres` and supply your own password. Create a new database named "TPC-H".
 3. Clone this repository into a new folder.
@@ -17,13 +28,16 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 7. Once all data has been imported, right click each table and verify that the data has been correctly imported by clicking `View/Edit Data` > `First 100 Rows`.
 8. If all the data seems correct, run `psql -U postgres -f dss.ri TPC-H` in your terminal. This command will create the constraints on the tables, including initializing the primary keys and foreign keys on the various tables.
 9. Next, right click each table within pgAdmin and click on `Maintenance`. Tick `Vaccuum`, and turn `Analyze` and `Verbose Messages` on. Run this for each table.
-10. Download [Picasso](https://dsl.cds.iisc.ac.in/projects/PICASSO/picasso_download/license.htm). Make sure to select the full library (we recommend getting the zip file). Extract it.
-11. Ensure you have at least JDK 6.0 installed. We suggest the latest version of [AdoptOpenJDK](https://adoptopenjdk.net/releases.html). If you have your Java environment set up, navigate to `./PicassoRun/Windows/` and run `activatedb.bat`, `compileServer.bat` and `compileClient.bat` in this order to compile the Java files.
-12. To connect to the Postgresql database, we will need to update our JDBC driver to the latest version. The JDBC driver serves to connect the Java application to our Postgresql database. Download it [here](https://jdbc.postgresql.org/download.html#current).
-13. Navigate to `./Libraries/` and find the jar file for the old JDBC driver for Postgresql. It should be named something like `postgresql-8.0-311.jdbc3`. Replace this file with the latest version that you just downloaded. Rename it so it matches the old name (e.g. `postgresql-8.0-311.jdbc3`) exactly, so that Picasso can detect it. Alternatively, you can let Picasso detect the name of the new file by modifying the `runServer.bat` script to include the new jdbc driver in `./PicassoRun/Windows/`.
-14. Navigate back to `./PicassoRun/Windows/`. We can now start the program. Run `runServer.bat` to start the Picasso server, then run `runClient.bat` to run the Picasso client. A GUI should pop up. Click on `Enter`, and enter the connection details (`localhost` and port `4444` by default).
-15. The Picasso client GUI should appear. We need to create a new connection to our TPC-H database. In the top menu, click on `DBConnection`, then click `New`. The DB Connection Settings window should pop up.
-16. Fill in the following details:
+
+## Setting up Picasso (DBMS query optimization visualizer)
+
+1. Download [Picasso](https://dsl.cds.iisc.ac.in/projects/PICASSO/picasso_download/license.htm). Make sure to select the full library (we recommend getting the zip file). Extract it.
+2. Ensure you have at least JDK 6.0 installed. We suggest the latest version of [AdoptOpenJDK](https://adoptopenjdk.net/releases.html). If you have your Java environment set up, navigate to `./PicassoRun/Windows/` and run `activatedb.bat`, `compileServer.bat` and `compileClient.bat` in this order to compile the Java files.
+3. To connect to the Postgresql database, we will need to update our JDBC driver to the latest version. The JDBC driver serves to connect the Java application to our Postgresql database. Download it [here](https://jdbc.postgresql.org/download.html#current).
+4. Navigate to `./Libraries/` and find the jar file for the old JDBC driver for Postgresql. It should be named something like `postgresql-8.0-311.jdbc3`. Replace this file with the latest version that you just downloaded. Rename it so it matches the old name (e.g. `postgresql-8.0-311.jdbc3`) exactly, so that Picasso can detect it. Alternatively, you can let Picasso detect the name of the new file by modifying the `runServer.bat` script to include the new jdbc driver in `./PicassoRun/Windows/`.
+5. Navigate back to `./PicassoRun/Windows/`. We can now start the program. Run `runServer.bat` to start the Picasso server, then run `runClient.bat` to run the Picasso client. A GUI should pop up. Click on `Enter`, and enter the connection details (`localhost` and port `4444` by default).
+6. The Picasso client GUI should appear. We need to create a new connection to our TPC-H database. In the top menu, click on `DBConnection`, then click `New`. The DB Connection Settings window should pop up.
+7. Fill in the following details:
 
 - Connection details: TPC-H (Arbitrary name to save this connection for use next time)
 - Machine: localhost (Where your database is running on)
@@ -36,11 +50,11 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 
   Click on `Save`.
 
-17. Now that we've created our connection profile, go to the orange `Settings` pane. Choose your new connection under `DBConnection Descriptor:`. For example, if you've named the connection you just created TPC-H, select that. Picasso then attempts to connect to the database, and prints `STATUS: DONE` at the bottom if it suceeds. If the server terminal window outputs errors about 'Authentication type 10 not supported', go back to step 12 to update your JDBC driver.
-18. We also have to update our Java3D driver in order for Picasso to be able to show graphs on a 64-bit architecture (it's legacy software). Download the latest Java3D executable from [this link](https://www.oracle.com/java/technologies/java-archive-downloads-java-client-downloads.html#java3d-1.5.1-oth-JPR). We recommend the `java3d-1_5_1-windows-amd64.exe` for 64-bit Windows.
-19. Run the executable and install it. Go to the install location (default `C:/Program Files/Java/Java3D/1.5.1/`) and go to `./lib/ext/`. Copy all the jar files there, and paste it into your libraries folder of Piccasso at `picasso/Libraries/`. Replace any existing files.
-20. Next, go back to the install location of Java3D and go to `./bin/`. Copy the `j3dcore-ogl.dll` file, and paste it in `C:/Windows/`, replacing any file there. This basically updates your Java3D runtime to 64-bit architecture.
-21. Finally, we can go back to Picasso and load in some query plans in the form of SQL queries to analyze. Ensure that you are connected to your database in the Settings tab (DBConnection Descriptor -> TPC-H).
-22. Click on the `QueryTemplate` tab just below the Settings section, and click the `Load QueryTemplate` button on the right. It brings up a default folder. Navigate to the `postgres` folder, and select any query to start.
-23. As Picasso loads the query in, you will see the SQL query displayed in the textbox. You can name this query for later retrieval by giving it a name in the `QueryTemplate Descriptor` field.
-24. With your SQL query loaded, click on the `Plan Diag` tab to generate a diagram enumerating all the optimized plans. If a prompt appears, click on `Generate Exact Diagram`. Click OK. You should see a colorful 2D square.
+8. Now that we've created our connection profile, go to the orange `Settings` pane. Choose your new connection under `DBConnection Descriptor:`. For example, if you've named the connection you just created TPC-H, select that. Picasso then attempts to connect to the database, and prints `STATUS: DONE` at the bottom if it suceeds. If the server terminal window outputs errors about 'Authentication type 10 not supported', go back to step 12 to update your JDBC driver.
+9. We also have to update our Java3D driver in order for Picasso to be able to show graphs on a 64-bit architecture (it's legacy software). Download the latest Java3D executable from [this link](https://www.oracle.com/java/technologies/java-archive-downloads-java-client-downloads.html#java3d-1.5.1-oth-JPR). We recommend the `java3d-1_5_1-windows-amd64.exe` for 64-bit Windows.
+10. Run the executable and install it. Go to the install location (default `C:/Program Files/Java/Java3D/1.5.1/`) and go to `./lib/ext/`. Copy all the jar files there, and paste it into your libraries folder of Piccasso at `picasso/Libraries/`. Replace any existing files.
+11. Next, go back to the install location of Java3D and go to `./bin/`. Copy the `j3dcore-ogl.dll` file, and paste it in `C:/Windows/`, replacing any file there. This basically updates your Java3D runtime to 64-bit architecture.
+12. Finally, we can go back to Picasso and load in some query plans in the form of SQL queries to analyze. Ensure that you are connected to your database in the Settings tab (DBConnection Descriptor -> TPC-H).
+13. Click on the `QueryTemplate` tab just below the Settings section, and click the `Load QueryTemplate` button on the right. It brings up a default folder. Navigate to the `postgres` folder, and select any query to start.
+14. As Picasso loads the query in, you will see the SQL query displayed in the textbox. You can name this query for later retrieval by giving it a name in the `QueryTemplate Descriptor` field.
+15. With your SQL query loaded, click on the `Plan Diag` tab to generate a diagram enumerating all the optimized plans. If a prompt appears, click on `Generate Exact Diagram`. Click OK. You should see a colorful 2D square.

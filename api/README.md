@@ -6,7 +6,7 @@ This is the backend of our SQL query optimization visualizer.
 
 1. Ensure that you have [Poetry](https://python-poetry.org/docs/) (A package manager for Python) and at minimum [Python 3.8](https://www.python.org/downloads/) installed.
 2. `cd` into this folder and run `poetry install` to install the Python package dependencies for this backend. We are using Flask as a web server.
-3. By default, the API server starts in production mode. To run in development mode, create an `.env` file in this folder and add the following environment variables:
+3. By default, the API server starts in production mode. To run in development mode and enable hot reloading, create an `.env` file in this folder and add the following environment variables:
 
 ```
 FLASK_APP=app.py
