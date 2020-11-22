@@ -13,6 +13,7 @@ const FormInput = () => {
     "query": "",
     "predicates": [],
     "selectivity": 50,
+    "dbUrl": "",
   });
   const [output, setOutput] = useState();
 
@@ -48,8 +49,8 @@ const FormInput = () => {
     });
   }
 
-  const handleSelectivity = (event) => {
-    setInput({ ...input, "selectivity": event.target.value });
+  const handleDbUrl = (event) => {
+    setInput({ ...input, "dbUrl": event.target.value });
   }
 
   const resetForm = (event) => {
@@ -57,8 +58,9 @@ const FormInput = () => {
       "query": "",
       "predicates": [],
       "selectivity": 50,
+      "dbUrl": "",
     });
-    setOutput("");
+    setOutput();
   }
 
   return (
@@ -66,9 +68,9 @@ const FormInput = () => {
       <Form onSubmit={handleSubmit} className="mb-4">
         <Form.Row>
           <Form.Group as={Col} controlId="formOptions">
-            <Form.Group controlId="formSelectivity">
-              <Form.Label>Selectivity</Form.Label>
-              <Form.Control onChange={handleSelectivity} type="range" defaultValue="50" min="0" max="100" custom />
+            <Form.Group controlId="formDbUrl">
+              <Form.Label>Database URL (optional)</Form.Label>
+              <Form.Control onChange={handleDbUrl} as="input" value={ input.dbUrl } className="w-100" placeholder="postgresql://<username>:<password>@<host>:<port>/<db_name>" custom />
             </Form.Group>
 
             <Form.Group controlId="formPredicates">
