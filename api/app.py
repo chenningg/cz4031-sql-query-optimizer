@@ -45,13 +45,16 @@ def get_plans():
 def query(sql_string):
     conn, cur = connect()
 
-    data = ''
-    if conn is not None:
-        cur.execute(sql_string)
-        data = cur.fetchall()
+    try:
+        data = ''
+        if conn is not None:
+            cur.execute(sql_string)
+            data = cur.fetchall()
 
-        conn.close()
-        print('Database connection closed.', file=stderr)
+            conn.close()
+            print('Database connection closed.', file=stderr)
+    except:
+        data = "Error executing query - check your SQL syntax"
 
     return data
 
