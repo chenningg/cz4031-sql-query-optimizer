@@ -16,7 +16,7 @@ const FormInput = () => {
   });
   const [output, setOutput] = useState({
     "output": "",
-    "explanation": "",
+    "explanation": [],
   });
 
   const handleSubmit = (event) => {
@@ -69,7 +69,7 @@ const FormInput = () => {
     });
     setOutput({
       "output": "",
-      "explanation": "",
+      "explanation": [],
     });
   }
 
@@ -232,9 +232,9 @@ const FormInput = () => {
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
           {
-            output.explanation.map((node) => {
-              
-            })
+              output.explanation.map((node, index) => {
+                return (<div></div>);
+              })
           }
           <Form.Control value={output.explanation} as="textarea" rows="25" readOnly />
         </Form.Group>
