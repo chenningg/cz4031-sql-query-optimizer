@@ -19,14 +19,17 @@ const FormInput = () => {
     "explanation": [],
   });
 
+  const [showAlert, setAlert] = useState(false);
+
   const handleSubmit = (event) => {
     event.preventDefault();
     setOutput("Generating output...")
 
     if (input.query !== "") {
       axios.post("/generate", input)
-      .then((response) => {
-        setOutput({"output": response.data.output, "explanation": response.data.explanation });
+        .then((response) => {
+          setOutput({ "output": response.data.output, "explanation": response.data.explanation });
+          console.log(output);
       })
       .catch((error) => {
         setOutput({ ...output, "output": "ERROR: Please ensure that your SQL query is executable." });
@@ -35,8 +38,18 @@ const FormInput = () => {
     else {
       setOutput({ ...output, "output": "ERROR: Please input an SQL query."});
     }
-    
   }
+
+  const limitPredicates = (event) => {
+    let timeout;
+    if (typeof(timeout) !== undefined) {
+      setTimeout(() => { setAlert(false); }, 2000);
+      setAlert(true);
+    }
+
+    event.target.checked = false;
+  }
+
 
   const handleChecked = (event) => {
     setInput(oldState => {
@@ -44,6 +57,11 @@ const FormInput = () => {
 
       if (event.target.checked) {
         if (index <= -1) {
+          // If too many, stop user from choosing more.
+          if (oldState.predicates.length >= 4) {
+            limitPredicates(event);
+            return (oldState);
+          }
           oldState.predicates.push(event.target.id)
         }
       }
@@ -75,6 +93,12 @@ const FormInput = () => {
 
   return (
     <>
+      {
+        showAlert ? <Card className="position-absolute" style={{ zIndex: 100, backgroundColor: "red", color: "white", top: 10 + "px" }}>
+        <Card.Body>You may only select a maximum of 4 predicates.</Card.Body>
+      </Card> : null
+      }
+      
       <Form onSubmit={handleSubmit} className="mb-4">
         <Form.Row>
           <Form.Group as={Col} controlId="formOptions">
@@ -231,6 +255,7 @@ const FormInput = () => {
       <Form.Row>
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
+          <Form.Control value={JSON.stringify(output.explanation)} readOnly />
         </Form.Group>
       </Form.Row>
     </>
