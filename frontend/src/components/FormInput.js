@@ -13,21 +13,29 @@ const FormInput = () => {
     "query": "",
     "predicates": [],
     "selectivity": 50,
-    "dbUrl": "",
   });
-  const [output, setOutput] = useState("");
+  const [output, setOutput] = useState({
+    "output": "",
+    "explanation": "",
+  });
 
   const handleSubmit = (event) => {
     event.preventDefault();
     setOutput("Generating output...")
 
-    axios.post("/generate", input)
-    .then((response) => {
-      setOutput(response.data);
-    })
-    .catch((error) => {
-      setOutput(error);
-    })
+    if (input.query !== "") {
+      axios.post("/generate", input)
+      .then((response) => {
+        setOutput({ ...output, "output": response.data });
+      })
+      .catch((error) => {
+        setOutput({ ...output, "output": "ERROR: Please ensure that your SQL query is executable." });
+      })
+    }
+    else {
+      setOutput({ ...output, "output": "ERROR: Please input an SQL query."});
+    }
+    
   }
 
   const handleChecked = (event) => {
@@ -49,8 +57,8 @@ const FormInput = () => {
     });
   }
 
-  const handleDbUrl = (event) => {
-    setInput({ ...input, "dbUrl": event.target.value });
+  const handleSelectivityChange = (event) => {
+    setInput({ ...input, "selectivity": event.target.value });
   }
 
   const resetForm = (event) => {
@@ -58,9 +66,11 @@ const FormInput = () => {
       "query": "",
       "predicates": [],
       "selectivity": 50,
-      "dbUrl": "",
     });
-    setOutput({});
+    setOutput({
+      "output": "",
+      "explanation": "",
+    });
   }
 
   return (
@@ -68,9 +78,16 @@ const FormInput = () => {
       <Form onSubmit={handleSubmit} className="mb-4">
         <Form.Row>
           <Form.Group as={Col} controlId="formOptions">
-            <Form.Group controlId="formDbUrl">
-              <Form.Label>Database URL (optional)</Form.Label>
-              <Form.Control onChange={handleDbUrl} as="input" value={ input.dbUrl } className="w-100" placeholder="postgresql://<username>:<password>@<host>:<port>/<db_name>" custom />
+            <Form.Group controlId="formSelectivity">
+              <Form.Label>Selectivity</Form.Label>
+              <Row>
+                <Col xs={10}>
+                  <Form.Control onChange={handleSelectivityChange} type="range" value={input.selectivity} className="w-80" custom />
+                </Col>
+                <Col>
+                  <Form.Control className="w-20 inline-block" value={`${input.selectivity}%`} readOnly />
+                </Col>
+              </Row>
             </Form.Group>
 
             <Form.Group controlId="formPredicates">
@@ -207,14 +224,14 @@ const FormInput = () => {
       <Form.Row>
         <Form.Group as={Col} controlId="formOutput">
           <Form.Label>Output</Form.Label>
-          <Form.Control as="textarea" rows="25" value={JSON.stringify(output, null, 2)} readOnly />
+          <Form.Control as="textarea" rows="25" value={JSON.stringify(output.output, null, 2)} readOnly />
         </Form.Group>
       </Form.Row>
 
       <Form.Row>
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
-          <Form.Control as="textarea" rows="25" readOnly />
+          <Form.Control value={ output.explanation } as="textarea" rows="25" readOnly />
         </Form.Group>
       </Form.Row>
     </>

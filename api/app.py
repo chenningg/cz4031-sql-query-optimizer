@@ -21,35 +21,39 @@ def hello():
     return "Hey, you're not supposed to come here! But if you find this, please give us extra marks, thanks! (:"
 
 
-''' #################################################################### 
+""" #################################################################### 
 used to generate a query plan based on the provided query
-#################################################################### '''
+#################################################################### """
+
+
 @app.route("/generate", methods=["POST"])
 def get_plans():
     # Gets the request data from the frontend
     request_data = request.json
 
-
     # Gets the query execution plan (qep) recommended by postgres for this query
     qep_sql_string = "EXPLAIN (FORMAT JSON, BUFFERS) " + request_data["query"]
-    clean_qep_sql_string = reset_connection_settings_string('all') + qep_sql_string # make sure that all joins and scans are enabled 
+    clean_qep_sql_string = (
+        reset_connection_settings_string("all") + qep_sql_string
+    )  # make sure that all joins and scans are enabled
 
     optimal_qep = query(clean_qep_sql_string, explain=True)
     optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
-    
+
     postorder_qep(optimal_qep)
     optimal_qep = json.loads(optimal_qep)
 
-
-    # get the different scanning cost for this variations of this qep 
+    # get the different scanning cost for this variations of this qep
     get_scan_cost(qep_sql_string)
 
     return optimal_qep
 
 
-''' #################################################################### 
-recorder a query plan 
-#################################################################### '''
+""" #################################################################### 
+Prints out a query plan 
+#################################################################### """
+
+
 def postorder_qep(plan):
     try:
         plan = json.loads(plan)
@@ -140,9 +144,11 @@ def postorder_qep(plan):
         print("Can't find any nodes in query execution plan.", file=stderr)
 
 
-''' #################################################################### 
+""" #################################################################### 
 helper that processes a query and returns the data
-#################################################################### '''
+#################################################################### """
+
+
 def query(sql_string, explain=False):
     conn, cur = connect()
 
@@ -163,9 +169,11 @@ def query(sql_string, explain=False):
         return data[0]
 
 
-''' #################################################################### 
+""" #################################################################### 
 establish connection to database
-#################################################################### '''
+#################################################################### """
+
+
 def connect():
     """ Connect to the PostgreSQL database server """
     try:
@@ -190,45 +198,57 @@ def connect():
         return error, error
 
 
-''' #################################################################### 
+""" #################################################################### 
 get the cost of performing scans on relations
-#################################################################### '''
+#################################################################### """
+
+
 def get_scan_cost(qep_sql_string):
     # various scan settings. Only enable one (one-hot)
-    scan_types = ["enable_bitmapscan", "enable_indexscan", "enable_seqscan", "enable_tidscan"]
+    scan_types = [
+        "enable_bitmapscan",
+        "enable_indexscan",
+        "enable_seqscan",
+        "enable_tidscan",
+    ]
     scan_types_qeps = []
 
     for scan_type_on in scan_types:
-        scan_type_sql_string = reset_connection_settings_string('join') # make sure joins are all enabled
+        scan_type_sql_string = reset_connection_settings_string(
+            "join"
+        )  # make sure joins are all enabled
 
-        # create the one-hot scan type query 
+        # create the one-hot scan type query
         for scan_type_inner in scan_types:
             if scan_type_inner == scan_type_on:
-                scan_type_sql_string = scan_type_sql_string + f"SET {scan_type_inner} = ON;"
+                scan_type_sql_string = (
+                    scan_type_sql_string + f"SET {scan_type_inner} = ON;"
+                )
             else:
-                scan_type_sql_string = scan_type_sql_string + f"SET {scan_type_inner} = OFF;"
+                scan_type_sql_string = (
+                    scan_type_sql_string + f"SET {scan_type_inner} = OFF;"
+                )
         scan_type_sql_string = scan_type_sql_string + qep_sql_string
-        
+
         print(scan_type_sql_string, file=stderr)
         print("*" * 50, file=stderr)
-        
 
         # get the qep for the one-hot scan type
         scan_type_on_qep = query(scan_type_sql_string, explain=True)
         scan_type_on_qep = json.dumps(ast.literal_eval(str(scan_type_on_qep)))
-        
+
         postorder_qep(scan_type_on_qep)
         scan_type_on_qep = json.loads(scan_type_on_qep)
-    
+
         scan_types_qeps.append(scan_type_on_qep)
-    
-    
+
     # reset the types of scans enabled to ON
-    reset_scan_type_sql_string = ''
+    reset_scan_type_sql_string = ""
     for scan_type in scan_types:
-        reset_scan_type_sql_string = reset_scan_type_sql_string + f"SET {scan_type} = ON;"
+        reset_scan_type_sql_string = (
+            reset_scan_type_sql_string + f"SET {scan_type} = ON;"
+        )
     query(reset_scan_type_sql_string)
-    
 
     # get the cost of scanning various relations
     scan_types_qep_relations_costs = []
@@ -246,11 +266,10 @@ def get_scan_cost(qep_sql_string):
             if "Plans" in qep.keys():
                 for plan in qep["Plans"]:
                     recurse(plan)
-        
+
         recurse(scan_types_qep)
 
         scan_types_qep_relations_costs.append({scan_types[i]: queried_relations})
-
 
     # just get the information that we are interested in
     for scan_types_qep_relations_cost in scan_types_qep_relations_costs:
@@ -259,13 +278,17 @@ def get_scan_cost(qep_sql_string):
         for key in scan_types_qep_relations_cost.keys():
             for item in scan_types_qep_relations_cost[key]:
                 for item_key in list(item):
-                    if item_key not in ["Node Type", "Relation Name", "Startup Cost", "Total Cost"]:
+                    if item_key not in [
+                        "Node Type",
+                        "Relation Name",
+                        "Startup Cost",
+                        "Total Cost",
+                    ]:
                         del item[item_key]
                     if item_key == "Node Type":
                         if item[item_key] == "Bitmap Heap Scan":
                             item[item_key] = "Bitmap Scan"
-    
-    
+
     print(scan_types_qep_relations_costs, file=stderr)
     for scan_type in scan_types_qep_relations_costs:
         print(scan_type.keys(), file=stderr)
@@ -274,27 +297,34 @@ def get_scan_cost(qep_sql_string):
             print(relation, "\n", file=stderr)
         print("\n\n", file=stderr)
     return scan_types_qep_relations_costs
-    
 
-''' #################################################################### 
+
+""" #################################################################### 
 used to create the reset_sql_string to enable all types of joins and scans (to conduct a normal query)
-#################################################################### '''
+#################################################################### """
+
+
 def reset_connection_settings_string(reset_type):
-    reset_sql_string = ''
-    
-    scan_types = ["enable_bitmapscan", "enable_indexscan", "enable_seqscan", "enable_tidscan"]
+    reset_sql_string = ""
+
+    scan_types = [
+        "enable_bitmapscan",
+        "enable_indexscan",
+        "enable_seqscan",
+        "enable_tidscan",
+    ]
     join_types = ["enable_hashjoin", "enable_mergejoin", "enable_nestloop"]
 
-    if reset_type == 'all':
+    if reset_type == "all":
         for scan_type in scan_types:
             reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"
         for join_type in join_types:
             reset_sql_string = reset_sql_string + f"SET {join_type} = ON;"
-    if reset_type == 'join':
+    if reset_type == "join":
         for join_type in join_types:
             reset_sql_string = reset_sql_string + f"SET {join_type} = ON;"
-    if reset_type == 'scan':
+    if reset_type == "scan":
         for scan_type in scan_types:
-            reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"            
+            reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"
 
     return reset_sql_string
