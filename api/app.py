@@ -236,8 +236,6 @@ def get_scan_cost(qep_sql_string):
         # get the qep for the one-hot scan type
         scan_type_on_qep = query(scan_type_sql_string, explain=True)
         scan_type_on_qep = json.dumps(ast.literal_eval(str(scan_type_on_qep)))
-
-        postorder_qep(scan_type_on_qep)
         scan_type_on_qep = json.loads(scan_type_on_qep)
 
         scan_types_qeps.append(scan_type_on_qep)
