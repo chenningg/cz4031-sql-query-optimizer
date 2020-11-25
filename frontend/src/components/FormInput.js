@@ -15,7 +15,7 @@ const FormInput = () => {
     "selectivity": 50,
     "dbUrl": "",
   });
-  const [output, setOutput] = useState();
+  const [output, setOutput] = useState("");
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -60,7 +60,7 @@ const FormInput = () => {
       "selectivity": 50,
       "dbUrl": "",
     });
-    setOutput();
+    setOutput({});
   }
 
   return (
@@ -207,11 +207,14 @@ const FormInput = () => {
       <Form.Row>
         <Form.Group as={Col} controlId="formOutput">
           <Form.Label>Output</Form.Label>
-          <Form.Control as="textarea" rows="19" value={JSON.stringify(output)} readOnly />
+          <Form.Control as="textarea" rows="25" value={JSON.stringify(output, null, 2)} readOnly />
         </Form.Group>
+      </Form.Row>
+
+      <Form.Row>
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
-          <Form.Control as="textarea" rows="19" readOnly />
+          <Form.Control as="textarea" rows="25" readOnly />
         </Form.Group>
       </Form.Row>
     </>

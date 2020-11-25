@@ -7,7 +7,6 @@ import ast
 import json
 import numpy as np
 
-
 app = Flask(__name__)
 
 # Load environment variables
@@ -29,6 +28,7 @@ used to generate a query plan based on the provided query
 def get_plans():
     # Gets the request data from the frontend
     request_data = request.json
+
 
     # Gets the query execution plan (qep) recommended by postgres for this query
     qep_sql_string = "EXPLAIN (FORMAT JSON, BUFFERS) " + request_data["query"]
@@ -62,19 +62,79 @@ def postorder_qep(plan):
         name = 65
 
         def recurse(plan):
-            if not plan:
+            if plan == None:
                 return
 
-            # Recurse all the way down the tree and get the intermediate output(s)
-            if plan.get("Plans"):
-                for branch in plan.get("Plans"):
-                    postorder_result.append(recurse(branch), file=stderr)
+            global name
+
+            child_names = []
 
             # My own output name (e.g. A)
-            curr_name = chr(name)
+            curr_name = ""
+
+            # Recurse all the way down the tree and get the intermediate output(s)
+            if plan.get("Plans") != None:
+                for branch in plan.get("Plans"):
+                    result = recurse(branch)
+
+                    if result:
+                        child_names.append(result[0])
+                        postorder_result.append(result[1])
+
+                    # If not leaf node, give an arbitrary name
+                    curr_name = chr(name)
+                    name += 1
+            # If we are a leaf node, then just put table name
+            else:
+                curr_name = plan.get("Relation Name")
 
             # When we reach here, we can assume we are a leaf node, or that all our children has already recursed.
-        recurse(plan)
+            output = ""
+            node_type = plan.get("Node Type")
+            output += node_type + " "
+
+            # Take care of joins and sorts
+            if (
+                node_type == "Hash"
+                or node_type == "Sort"
+                or node_type == "Gather Merge"
+                or node_type == "Merge"
+                or node_type == "Aggregate"
+            ):
+                output += child_names[0] + " as " + curr_name + "."
+            elif (
+                node_type == "Hash Join"
+                or node_type == "Nested Loop"
+                or node_type == "Merge Join"
+            ):
+                if node_type == "Nested Loop":
+                    output += "Join "
+                output += (
+                    "between "
+                    + child_names[0]
+                    + " (outer) and "
+                    + child_names[1]
+                    + " (inner) as "
+                    + curr_name
+                    + "."
+                )
+            else:
+                output += "on " + curr_name + "."
+
+            print([curr_name, output], file=stderr)
+
+            return [curr_name, output]
+
+        output = ""
+        node_type = plan.get("Node Type")
+        result = recurse(plan)
+
+        if result:
+            output += node_type + " " + result[0] + " to get final result " + chr(name)
+
+        postorder_result.append(output)
+
+        return postorder_result
 
     except:
         print("Can't find any nodes in query execution plan.", file=stderr)
@@ -103,20 +163,20 @@ def query(sql_string, explain=False):
         return data[0]
 
 
-
 ''' #################################################################### 
 establish connection to database
 #################################################################### '''
 def connect():
     """ Connect to the PostgreSQL database server """
     try:
+        # connection details
         conn = psycopg2.connect(
-            host=os.getenv("DB_HOST"),
-            database=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            port=os.getenv("DB_PORT")
-        )        
+            host=os.getenv("DB_HOST", "localhost"),
+            database=os.getenv("DB_NAME", "TPC-H"),
+            user=os.getenv("DB_USER", "postgres"),
+            password=os.getenv("DB_PASSWORD", "postgres"),
+            port=os.getenv("DB_PORT", 5432),
+        )
 
         cur = conn.cursor()
 
@@ -238,6 +298,3 @@ def reset_connection_settings_string(reset_type):
             reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"            
 
     return reset_sql_string
-
-
-
