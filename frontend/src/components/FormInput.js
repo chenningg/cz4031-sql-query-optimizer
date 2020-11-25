@@ -231,12 +231,6 @@ const FormInput = () => {
       <Form.Row>
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
-          {
-              output.explanation.map((node, index) => {
-                return (<div></div>);
-              })
-          }
-          <Form.Control value={output.explanation} as="textarea" rows="25" readOnly />
         </Form.Group>
       </Form.Row>
     </>
