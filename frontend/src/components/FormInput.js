@@ -26,7 +26,7 @@ const FormInput = () => {
     if (input.query !== "") {
       axios.post("/generate", input)
       .then((response) => {
-        setOutput({ ...output, "output": response.data });
+        setOutput({"output": response.data.output, "explanation": response.data.explanation });
       })
       .catch((error) => {
         setOutput({ ...output, "output": "ERROR: Please ensure that your SQL query is executable." });
@@ -231,7 +231,12 @@ const FormInput = () => {
       <Form.Row>
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
-          <Form.Control value={ output.explanation } as="textarea" rows="25" readOnly />
+          {
+            output.explanation.map((node) => {
+              
+            })
+          }
+          <Form.Control value={output.explanation} as="textarea" rows="25" readOnly />
         </Form.Group>
       </Form.Row>
     </>

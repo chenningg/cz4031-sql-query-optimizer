@@ -40,13 +40,13 @@ def get_plans():
     optimal_qep = query(clean_qep_sql_string, explain=True)
     optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
 
-    postorder_qep(optimal_qep)
+    explanation = postorder_qep(optimal_qep)
     optimal_qep = json.loads(optimal_qep)
 
     # get the different scanning cost for this variations of this qep
     get_scan_cost(qep_sql_string)
 
-    return optimal_qep
+    return json.dumps({"output": optimal_qep, "explanation": explanation})
 
 
 """ #################################################################### 
