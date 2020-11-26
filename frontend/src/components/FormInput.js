@@ -71,7 +71,7 @@ const FormInput = () => {
         }
       }
 
-      return (oldState);
+      return ({ ...oldState, "predicates": oldState.predicates });
     });
   }
 
@@ -224,23 +224,29 @@ const FormInput = () => {
               </Accordion>
             </Form.Group>
           </Form.Group>
+
+          <Form.Group as={Col} controlId="formInput">
+            <Form.Group controlId="formPredicatesInput">
+              <Form.Label>Selected predicates</Form.Label>
+              <Form.Control value={JSON.stringify(input.predicates)} readOnly />
+            </Form.Group>
             
-          <Form.Group as={Col} controlId="formQuery">
-            <Form.Label>SQL Query</Form.Label>
-            <Form.Control as="textarea" rows="19" placeholder="Input SQL query..." onChange={event => setInput({...input, "query": event.target.value})} value={input.query} />
-          
-            <Row>
-              <Col>
-                <Button onClick={ resetForm } variant="secondary" type="reset" className="w-100 mt-3">
-                Reset
-                </Button>
-              </Col>
-              <Col>
-                <Button variant="primary" type="submit" className="w-100 mt-3">
-                Generate
-                </Button>
-              </Col>
-            </Row>
+            <Form.Group controlId="formQuery">
+                <Form.Label>SQL Query</Form.Label>
+                <Form.Control as="textarea" rows="19" placeholder="Input SQL query..." onChange={event => setInput({...input, "query": event.target.value})} value={input.query} />
+              <Row>
+                <Col>
+                  <Button onClick={ resetForm } variant="secondary" type="reset" className="w-100 mt-3">
+                  Reset
+                  </Button>
+                </Col>
+                <Col>
+                  <Button variant="primary" type="submit" className="w-100 mt-3">
+                  Generate
+                  </Button>
+                </Col>
+              </Row>
+            </Form.Group>
           </Form.Group>
         </Form.Row>
       </Form>
