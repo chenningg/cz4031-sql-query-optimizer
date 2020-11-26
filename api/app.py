@@ -8,6 +8,7 @@ import json
 import numpy as np
 import sqlparse
 import string
+import re
 
 app = Flask(__name__)
 
@@ -66,7 +67,7 @@ def get_selectivities(sql_string, predicates):
         # Find the place in query to add additional clauses for selectivity
         where_index = sql_string.find("where")
 
-        # If there is a where statement, just add selectivity clause in where statement
+        # If there is a where statement, pull all conditions from it
         if where_index != -1:
             # Go to start of where statement
             where_index += 6
@@ -75,6 +76,7 @@ def get_selectivities(sql_string, predicates):
             clauses = sql_string[where_index:].split("\n")
             conditions = []
 
+            # Pull the where conditions from the query
             for clause in clauses:
                 # Check if it's a where comparative clause
                 if any(i in clause for i in ">=<!"):
@@ -82,9 +84,8 @@ def get_selectivities(sql_string, predicates):
                     clean_clause = "".join(clean_clause.split("and "))
                     conditions.append(clean_clause)
 
-            print(conditions, file=stderr)
-
-            # Get the tablename and attribute name for querying pg_stats
+            # Get the tablename and attribute name for querying pg_stats to get histogram
+            # We only care about predicates the user wants to vary
             for predicate in predicates:
                 predicate_values = predicate.split("_")
                 table_names = {
@@ -97,8 +98,58 @@ def get_selectivities(sql_string, predicates):
                     "o": "orders",
                     "l": "lineitem",
                 }
-                table = table_names[predicate_values[0]]
-                attribute = predicate
+                predicate_table = table_names[predicate_values[0]]
+                predicate_attribute = predicate
+                predicate_condition = ""
+
+                # Get condition for predicate
+                for condition in conditions:
+                    if predicate in condition:
+                        predicate_condition = condition
+                        break
+
+                # If no predicate among conditions, ignore it
+                if predicate_condition == "":
+                    continue
+
+                predicate_comparator = ""
+                comparators = ["<=", ">=", "!=", ">", "<", "="]
+                for comparator in comparators:
+                    if predicate_condition.find(comparator) != -1:
+                        predicate_comparator = comparator
+                        break
+
+                predicate_conditions = re.split(">=|<=|!=|<|>|=", predicate_condition)
+
+                predicate_condition = {
+                    "left": predicate_conditions[0].strip(" "),
+                    "comparator": predicate_comparator,
+                    "right": predicate_conditions[1].strip(" "),
+                }
+
+                # Get statistics from DBMS on predicate's desired selectivity
+                # If it's an equality comparator, use MCV
+                if (
+                    predicate_condition["comparator"] == "="
+                    or predicate_condition["comparator"] == "!="
+                ):
+                    # Use most common values (MSV) to determine selectivity requirement
+                    statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename={} AND attname={};".format(
+                        predicate_table, predicate_attribute
+                    )
+
+                    # Query for the MSV
+
+                    print(statement, file=stderr)
+                # Else if it's a range comparator, we use the histogram bounds to determine selectivity
+                else:
+                    statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename={} AND attname={};".format(
+                        predicate_table, predicate_attribute
+                    )
+
+                    # Query for the histogram
+
+                    print(statement, file=stderr)
 
         # No where clause, we just assume 100% for selectivity
         else:
@@ -135,7 +186,7 @@ def get_selective_qep(sql_string, selectivities, predicates):
         else:
             print("No where clause", file=stderr)
     except:
-        print("Error", file=stderr)
+        print("ERROR!", file=stderr)
 
 
 """ #################################################################### 
