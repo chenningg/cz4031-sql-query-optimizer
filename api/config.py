@@ -13,11 +13,6 @@ class Config(object):
     FLASK_APP = os.getenv("FLASK_APP", "app.py")
     FLASK_ENV = os.getenv("FLASK_ENV", "development")
 
-    # Database
-    SQLALCHEMY_DATABASE_URI = os.getenv("DB_URL")
-    SQLALCHEMY_ECHO = False
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-
 
 class ProductionConfig(Config):
     FLASK_ENV = "production"

@@ -51,6 +51,19 @@ const FormInput = () => {
   }
 
 
+  const parseExplanation = () => {
+    if (typeof (output.explanation) == "object") {
+      return (
+        <ol>
+          {
+            output.explanation.map(node => {
+              return (<li key={node}>{node}</li>);
+            })}
+        </ol >
+      );
+    }
+  }
+
   const handleChecked = (event) => {
     setInput(oldState => {
       const index = oldState.predicates.indexOf(event.target.id);
@@ -106,10 +119,10 @@ const FormInput = () => {
               <Form.Label>Selectivity</Form.Label>
               <Row>
                 <Col xs={10}>
-                  <Form.Control onChange={handleSelectivityChange} type="range" value={input.selectivity} className="w-80" custom />
+                  <Form.Control onChange={handleSelectivityChange} type="range" value={input.selectivity} custom />
                 </Col>
                 <Col>
-                  <Form.Control className="w-20 inline-block" value={`${input.selectivity}%`} readOnly />
+                  <Form.Control className="inline-block" value={`${input.selectivity}%`} style={{ width: `55px`, padding: `0 5px`, textAlign: "center"}} readOnly />
                 </Col>
               </Row>
             </Form.Group>
@@ -228,7 +241,7 @@ const FormInput = () => {
           <Form.Group as={Col} controlId="formInput">
             <Form.Group controlId="formPredicatesInput">
               <Form.Label>Selected predicates</Form.Label>
-              <Form.Control value={JSON.stringify(input.predicates)} readOnly />
+              <Form.Control as="textarea" rows="1" value={JSON.stringify(input.predicates)} readOnly />
             </Form.Group>
             
             <Form.Group controlId="formQuery">
@@ -261,7 +274,7 @@ const FormInput = () => {
       <Form.Row>
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
-          <Form.Control value={JSON.stringify(output.explanation)} readOnly />
+          {parseExplanation()}
         </Form.Group>
       </Form.Row>
     </>

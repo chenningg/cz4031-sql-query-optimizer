@@ -6,6 +6,8 @@ import psycopg2
 import ast
 import json
 import numpy as np
+import sqlparse
+import string
 
 app = Flask(__name__)
 
@@ -33,10 +35,12 @@ def get_plans():
 
     # Gets the query execution plan (qep) recommended by postgres for this query
     qep_sql_string = "EXPLAIN (FORMAT JSON, BUFFERS) " + request_data["query"]
+
     clean_qep_sql_string = (
         reset_connection_settings_string("all") + qep_sql_string
     )  # make sure that all joins and scans are enabled
 
+    # Get the optimal qep
     optimal_qep = query(clean_qep_sql_string, explain=True)
     optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
 
@@ -46,12 +50,100 @@ def get_plans():
     # get the different scanning cost for this variations of this qep
     get_scan_cost(qep_sql_string)
 
+    # Get the selectivity variation of this qep.
+    get_selectivities(request_data["query"], request_data["predicates"])
+
     return json.dumps({"output": optimal_qep, "explanation": explanation})
+
+
+""" #################################################################### 
+Calculates the specific selectivities of each predicate in the query.
+#################################################################### """
+
+
+def get_selectivities(sql_string, predicates):
+    try:
+        # Find the place in query to add additional clauses for selectivity
+        where_index = sql_string.find("where")
+
+        # If there is a where statement, just add selectivity clause in where statement
+        if where_index != -1:
+            # Go to start of where statement
+            where_index += 6
+
+            # Get where clauses to find predicates
+            clauses = sql_string[where_index:].split("\n")
+            conditions = []
+
+            for clause in clauses:
+                # Check if it's a where comparative clause
+                if any(i in clause for i in ">=<!"):
+                    clean_clause = "".join(clause.split("\t"))
+                    clean_clause = "".join(clean_clause.split("and "))
+                    conditions.append(clean_clause)
+
+            print(conditions, file=stderr)
+
+            # Get the tablename and attribute name for querying pg_stats
+            for predicate in predicates:
+                predicate_values = predicate.split("_")
+                table_names = {
+                    "r": "region",
+                    "n": "nation",
+                    "s": "supplier",
+                    "c": "customer",
+                    "p": "part",
+                    "ps": "partsupp",
+                    "o": "orders",
+                    "l": "lineitem",
+                }
+                table = table_names[predicate_values[0]]
+                attribute = predicate
+
+        # No where clause, we just assume 100% for selectivity
+        else:
+            print("No where clause", file=stderr)
+    except:
+        print("Error", file=stderr)
+
+
+""" #################################################################### 
+Get optimal query plan for a given query by adding selectivities for each predicate.
+Selectivity must have same number of keys as predicates.
+#################################################################### """
+
+
+def get_selective_qep(sql_string, selectivities, predicates):
+    try:
+        # Find the place in query to add additional clauses for selectivity
+        where_index = sql_string.find("where")
+
+        # If there is a where statement, just add selectivity clause in where statement
+        if where_index != -1:
+            # Go to start of where statement
+            where_index += 6
+            for i in range(0, len(predicates)):
+                predicate = str(predicates[i])
+                selectivity = str(selectivities[i])
+                sql_string = (
+                    sql_string[:where_index]
+                    + " {} < {} and ".format(predicate, selectivity)
+                    + sql_string[where_index:]
+                )
+
+            print(sql_string, file=stderr)
+        else:
+            print("No where clause", file=stderr)
+    except:
+        print("Error", file=stderr)
 
 
 """ #################################################################### 
 Prints out a query plan 
 #################################################################### """
+
+# Output name of intermediate output
+name = 65
 
 
 def postorder_qep(plan):
@@ -62,7 +154,7 @@ def postorder_qep(plan):
 
         postorder_result = []
 
-        # Output name of intermediate output
+        global name
         name = 65
 
         def recurse(plan):

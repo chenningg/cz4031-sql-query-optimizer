@@ -15,6 +15,8 @@ Other than the instructions in those two folders, the following setup instructio
 - Have not installed Postgresql on your computer.
 - Have not generated a set of [TPC-H](http://www.tpc.org/tpch/) dummy data and populated a Postgresql database with it.
 
+If you've already completed these two steps, feel free to ignore the setup instructions below and simply run `yarn start` from the root folder in order to start both the frontend and the api server concurrently.
+
 ## Setting up Postgresql and the TPC-H dataset
 
 1. Ensure that you have [Postgresql](https://www.postgresql.org/download/) installed. This project may work on other databases, but has only been tested on Postgresql.
