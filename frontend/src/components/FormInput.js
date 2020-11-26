@@ -94,7 +94,7 @@ const FormInput = () => {
   return (
     <>
       {
-        showAlert ? <Card className="position-absolute" style={{ zIndex: 100, backgroundColor: "red", color: "white", top: 10 + "px" }}>
+        showAlert ? <Card className="position-fixed" style={{ zIndex: 100, backgroundColor: "red", color: "white", top: 50 + '%', left: 50 + '%', transform: `translate(-50%, -50%)`}}>
         <Card.Body>You may only select a maximum of 4 predicates.</Card.Body>
       </Card> : null
       }
