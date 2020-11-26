@@ -1,0 +1,13 @@
+{
+  "name": "sql-query-optimizer",
+  "version": "1.0.0",
+  "repository": "https://github.com/chenningg/sql-query-optimizer.git",
+  "author": "Chen Ning <chenningg97@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "concurrently \"cd ./frontend && yarn start\" \"cd ./api && poetry run flask run\"",
+    "start-api": "cd ./api && poetry run flask run",
+    "start-frontend": "cd ./frontend && yarn start"
+  }
+}
