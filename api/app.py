@@ -127,6 +127,8 @@ def get_selectivities(sql_string, predicates):
                     "right": predicate_conditions[1].strip(" "),
                 }
 
+                print(predicate_condition, file=stderr)
+
                 # Get statistics from DBMS on predicate's desired selectivity
                 # If it's an equality comparator, use MCV
                 if (
@@ -134,22 +136,22 @@ def get_selectivities(sql_string, predicates):
                     or predicate_condition["comparator"] == "!="
                 ):
                     # Use most common values (MSV) to determine selectivity requirement
-                    statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename={} AND attname={};".format(
+                    statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
                         predicate_table, predicate_attribute
                     )
 
                     # Query for the MSV
-
-                    print(statement, file=stderr)
+                    stats = query(statement)
+                    print(stats, file=stderr)
                 # Else if it's a range comparator, we use the histogram bounds to determine selectivity
                 else:
-                    statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename={} AND attname={};".format(
+                    statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
                         predicate_table, predicate_attribute
                     )
 
                     # Query for the histogram
-
-                    print(statement, file=stderr)
+                    stats = query(statement)
+                    print(stats, file=stderr)
 
         # No where clause, we just assume 100% for selectivity
         else:
