@@ -37,22 +37,19 @@ def get_plans():
     # Gets the query execution plan (qep) recommended by postgres for this query
     qep_sql_string = "EXPLAIN (FORMAT JSON, BUFFERS) " + request_data["query"]
 
-    clean_qep_sql_string = (
-        reset_connection_settings_string("all") + qep_sql_string
-    )  # make sure that all joins and scans are enabled
-
     # Get the optimal qep
-    optimal_qep = query(clean_qep_sql_string, explain=True)
+    optimal_qep = query(qep_sql_string, explain=True)
     optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
 
     explanation = postorder_qep(optimal_qep)
     optimal_qep = json.loads(optimal_qep)
 
-    # get the different scanning cost for this variations of this qep
-    get_scan_cost(qep_sql_string)
-
     # Get the selectivity variation of this qep.
     get_selectivities(request_data["query"], request_data["predicates"])
+
+    # JUST FOR TESTING AT THE MOMENT
+    # GET A HISTOGRAM
+    get_histogram()
 
     return json.dumps({"output": optimal_qep, "explanation": explanation})
 
@@ -343,131 +340,235 @@ def connect():
         return error, error
 
 
+# """ #################################################################### 
+# get the cost of performing scans on relations
+# #################################################################### """
+
+
+# def get_scan_cost(qep_sql_string):
+#     # various scan settings. Only enable one (one-hot)
+#     scan_types = [
+#         "enable_bitmapscan",
+#         "enable_indexscan",
+#         "enable_seqscan",
+#         "enable_tidscan",
+#     ]
+#     scan_types_qeps = []
+
+#     for scan_type_on in scan_types:
+#         scan_type_sql_string = reset_connection_settings_string(
+#             "join"
+#         )  # make sure joins are all enabled
+
+#         # create the one-hot scan type query
+#         for scan_type_inner in scan_types:
+#             if scan_type_inner == scan_type_on:
+#                 scan_type_sql_string = (
+#                     scan_type_sql_string + f"SET {scan_type_inner} = ON;"
+#                 )
+#             else:
+#                 scan_type_sql_string = (
+#                     scan_type_sql_string + f"SET {scan_type_inner} = OFF;"
+#                 )
+#         scan_type_sql_string = scan_type_sql_string + qep_sql_string
+
+#         print(scan_type_sql_string, file=stderr)
+#         print("*" * 50, file=stderr)
+
+#         # get the qep for the one-hot scan type
+#         scan_type_on_qep = query(scan_type_sql_string, explain=True)
+#         scan_type_on_qep = json.dumps(ast.literal_eval(str(scan_type_on_qep)))
+#         scan_type_on_qep = json.loads(scan_type_on_qep)
+
+#         scan_types_qeps.append(scan_type_on_qep)
+
+#     # reset the types of scans enabled to ON
+#     reset_scan_type_sql_string = ""
+#     for scan_type in scan_types:
+#         reset_scan_type_sql_string = (
+#             reset_scan_type_sql_string + f"SET {scan_type} = ON;"
+#         )
+#     query(reset_scan_type_sql_string)
+
+#     # get the cost of scanning various relations
+#     scan_types_qep_relations_costs = []
+#     for i, scan_types_qep in enumerate(scan_types_qeps):
+
+#         queried_relations = []
+
+#         def recurse(qep):
+#             if type(qep) is not dict:
+#                 return
+#             if "Relation Name" in qep.keys():
+#                 queried_relations.append(qep)
+#             if "Plan" in qep.keys():
+#                 recurse(qep["Plan"])
+#             if "Plans" in qep.keys():
+#                 for plan in qep["Plans"]:
+#                     recurse(plan)
+
+#         recurse(scan_types_qep)
+
+#         scan_types_qep_relations_costs.append({scan_types[i]: queried_relations})
+
+#     # just get the information that we are interested in
+#     for scan_types_qep_relations_cost in scan_types_qep_relations_costs:
+#         print(scan_types_qep_relations_cost.keys(), "\n", file=stderr)
+
+#         for key in scan_types_qep_relations_cost.keys():
+#             for item in scan_types_qep_relations_cost[key]:
+#                 for item_key in list(item):
+#                     if item_key not in [
+#                         "Node Type",
+#                         "Relation Name",
+#                         "Startup Cost",
+#                         "Total Cost",
+#                     ]:
+#                         del item[item_key]
+#                     if item_key == "Node Type":
+#                         if item[item_key] == "Bitmap Heap Scan":
+#                             item[item_key] = "Bitmap Scan"
+
+#     print(scan_types_qep_relations_costs, file=stderr)
+#     for scan_type in scan_types_qep_relations_costs:
+#         print(scan_type.keys(), file=stderr)
+
+#         for relation in scan_type.values():
+#             print(relation, "\n", file=stderr)
+#         print("\n\n", file=stderr)
+#     return scan_types_qep_relations_costs
+
+
+# """ #################################################################### 
+# used to create the reset_sql_string to enable all types of joins and scans (to conduct a normal query)
+# #################################################################### """
+
+
+# def reset_connection_settings_string(reset_type):
+#     reset_sql_string = ""
+
+#     scan_types = [
+#         "enable_bitmapscan",
+#         "enable_indexscan",
+#         "enable_seqscan",
+#         "enable_tidscan",
+#     ]
+#     join_types = ["enable_hashjoin", "enable_mergejoin", "enable_nestloop"]
+
+#     if reset_type == "all":
+#         for scan_type in scan_types:
+#             reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"
+#         for join_type in join_types:
+#             reset_sql_string = reset_sql_string + f"SET {join_type} = ON;"
+#     if reset_type == "join":
+#         for join_type in join_types:
+#             reset_sql_string = reset_sql_string + f"SET {join_type} = ON;"
+#     if reset_type == "scan":
+#         for scan_type in scan_types:
+#             reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"
+
+#     return reset_sql_string
+
+
 """ #################################################################### 
-get the cost of performing scans on relations
+used to get the histgram for a specific attribute from a table 
 #################################################################### """
+def get_histogram():
+    print("hello", file=stderr)
+
+    # dummy values for coding first. assume we are doing a less-than query 
+    relation = 'lineitem'
+    attribute = 'l_extendedprice'
+    # attribute_value = 1501.51
+    # attribute_value = 923
+    attribute_value = 51011.8
+    operator = '>='
 
 
-def get_scan_cost(qep_sql_string):
-    # various scan settings. Only enable one (one-hot)
-    scan_types = [
-        "enable_bitmapscan",
-        "enable_indexscan",
-        "enable_seqscan",
-        "enable_tidscan",
-    ]
-    scan_types_qeps = []
-
-    for scan_type_on in scan_types:
-        scan_type_sql_string = reset_connection_settings_string(
-            "join"
-        )  # make sure joins are all enabled
-
-        # create the one-hot scan type query
-        for scan_type_inner in scan_types:
-            if scan_type_inner == scan_type_on:
-                scan_type_sql_string = (
-                    scan_type_sql_string + f"SET {scan_type_inner} = ON;"
-                )
-            else:
-                scan_type_sql_string = (
-                    scan_type_sql_string + f"SET {scan_type_inner} = OFF;"
-                )
-        scan_type_sql_string = scan_type_sql_string + qep_sql_string
-
-        print(scan_type_sql_string, file=stderr)
-        print("*" * 50, file=stderr)
-
-        # get the qep for the one-hot scan type
-        scan_type_on_qep = query(scan_type_sql_string, explain=True)
-        scan_type_on_qep = json.dumps(ast.literal_eval(str(scan_type_on_qep)))
-        scan_type_on_qep = json.loads(scan_type_on_qep)
-
-        scan_types_qeps.append(scan_type_on_qep)
-
-    # reset the types of scans enabled to ON
-    reset_scan_type_sql_string = ""
-    for scan_type in scan_types:
-        reset_scan_type_sql_string = (
-            reset_scan_type_sql_string + f"SET {scan_type} = ON;"
-        )
-    query(reset_scan_type_sql_string)
-
-    # get the cost of scanning various relations
-    scan_types_qep_relations_costs = []
-    for i, scan_types_qep in enumerate(scan_types_qeps):
-
-        queried_relations = []
-
-        def recurse(qep):
-            if type(qep) is not dict:
-                return
-            if "Relation Name" in qep.keys():
-                queried_relations.append(qep)
-            if "Plan" in qep.keys():
-                recurse(qep["Plan"])
-            if "Plans" in qep.keys():
-                for plan in qep["Plans"]:
-                    recurse(plan)
-
-        recurse(scan_types_qep)
-
-        scan_types_qep_relations_costs.append({scan_types[i]: queried_relations})
-
-    # just get the information that we are interested in
-    for scan_types_qep_relations_cost in scan_types_qep_relations_costs:
-        print(scan_types_qep_relations_cost.keys(), "\n", file=stderr)
-
-        for key in scan_types_qep_relations_cost.keys():
-            for item in scan_types_qep_relations_cost[key]:
-                for item_key in list(item):
-                    if item_key not in [
-                        "Node Type",
-                        "Relation Name",
-                        "Startup Cost",
-                        "Total Cost",
-                    ]:
-                        del item[item_key]
-                    if item_key == "Node Type":
-                        if item[item_key] == "Bitmap Heap Scan":
-                            item[item_key] = "Bitmap Scan"
-
-    print(scan_types_qep_relations_costs, file=stderr)
-    for scan_type in scan_types_qep_relations_costs:
-        print(scan_type.keys(), file=stderr)
-
-        for relation in scan_type.values():
-            print(relation, "\n", file=stderr)
-        print("\n\n", file=stderr)
-    return scan_types_qep_relations_costs
 
 
-""" #################################################################### 
-used to create the reset_sql_string to enable all types of joins and scans (to conduct a normal query)
-#################################################################### """
+    # retrieve a histogram
+    sql_string = f"SELECT histogram_bounds FROM pg_stats WHERE tablename = '{relation}' AND attname = '{attribute}';"
+    result = query(sql_string)
+    result = result[0]
+    histogram = result[1:-2]
+    histogram = histogram.split(',')
+    histogram = [float(i) for i in histogram]
+    num_buckets = len(histogram) - 1
+
+    print(histogram, file=stderr)
+    print(type(histogram), file=stderr)
+    print(len(histogram), file=stderr)
+    print(list(histogram), file=stderr)
 
 
-def reset_connection_settings_string(reset_type):
-    reset_sql_string = ""
+    # get the selectivity for the given attribute value
+    leftbound = 0
+    for i in range(num_buckets):
+        if attribute_value > histogram[i]:
+            leftbound = i
 
-    scan_types = [
-        "enable_bitmapscan",
-        "enable_indexscan",
-        "enable_seqscan",
-        "enable_tidscan",
-    ]
-    join_types = ["enable_hashjoin", "enable_mergejoin", "enable_nestloop"]
 
-    if reset_type == "all":
-        for scan_type in scan_types:
-            reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"
-        for join_type in join_types:
-            reset_sql_string = reset_sql_string + f"SET {join_type} = ON;"
-    if reset_type == "join":
-        for join_type in join_types:
-            reset_sql_string = reset_sql_string + f"SET {join_type} = ON;"
-    if reset_type == "scan":
-        for scan_type in scan_types:
-            reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"
+    selectivity = (leftbound + (attribute_value - histogram[leftbound])/(histogram[leftbound+1] - histogram[leftbound])) / num_buckets
+    
+    if operator in ["<=", "<"]:
+        pass
+    elif operator in [">=", ">"]:
+        selectivity = 1 - selectivity
+    print("selectivity of query: ", selectivity, file=stderr)
 
-    return reset_sql_string
+    print(len(histogram), file=stderr)
+    for i in range(0, len(histogram), 10):
+        print(histogram[i], file=stderr)
+    
+    
+    # get 20% below until 20% above, in 10% intervals
+    selectivities = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    
+    lower = [v for v in selectivities if v <= selectivity]
+    higher = [v for v in selectivities if v >= selectivity]
+    lower.sort()
+    higher.sort()
+
+    selectivities_required = []
+    
+    if len(lower) != 0:
+        lower_leftbound = max(len(lower) - 2, 0)
+        print('lower_leftbound, ', lower_leftbound, file=stderr)
+        for i in lower[lower_leftbound:]:
+            selectivities_required.append(i)
+
+    if len(higher) != 0:
+        higher_rightbound = min( len(higher), 2)
+        print('higher_rightbound, ', higher_rightbound, file=stderr)
+        for i in higher[:higher_rightbound]:
+            selectivities_required.append(i)
+    
+    selectivities_required.sort()
+    selectivities_required = list(set(selectivities_required))
+
+    values_required = {}
+    for i in selectivities_required:
+        index = int(i * 100)
+
+        if operator in ["<=", "<"]:
+            values_required[f"{i}"] = histogram[index]
+        elif operator in [">=", ">"]:
+            values_required[f"{1-i}"] = histogram[index]
+
+        
+
+    
+    # craft return value 
+    return_value = {    
+        'relation': relation,
+        'attribute': attribute,
+        'attribute_value': attribute_value,
+        'queried_selectivity': selectivity,
+        'histogram_bounds': values_required
+    }
+    
+            
+    print(return_value, file=stderr)
+
+    return
