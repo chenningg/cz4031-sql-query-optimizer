@@ -47,6 +47,10 @@ def get_plans():
     # Get the selectivity variation of this qep.
     get_selectivities(request_data["query"], request_data["predicates"])
 
+    # JUST FOR TESTING AT THE MOMENT
+    # GET A HISTOGRAM
+    get_histogram()
+
     return json.dumps({"output": optimal_qep, "explanation": explanation})
 
 
@@ -464,3 +468,107 @@ def connect():
 #             reset_sql_string = reset_sql_string + f"SET {scan_type} = ON;"
 
 #     return reset_sql_string
+
+
+""" #################################################################### 
+used to get the histgram for a specific attribute from a table 
+#################################################################### """
+def get_histogram():
+    print("hello", file=stderr)
+
+    # dummy values for coding first. assume we are doing a less-than query 
+    relation = 'lineitem'
+    attribute = 'l_extendedprice'
+    # attribute_value = 1501.51
+    # attribute_value = 923
+    attribute_value = 51011.8
+    operator = '>='
+
+
+
+
+    # retrieve a histogram
+    sql_string = f"SELECT histogram_bounds FROM pg_stats WHERE tablename = '{relation}' AND attname = '{attribute}';"
+    result = query(sql_string)
+    result = result[0]
+    histogram = result[1:-2]
+    histogram = histogram.split(',')
+    histogram = [float(i) for i in histogram]
+    num_buckets = len(histogram) - 1
+
+    print(histogram, file=stderr)
+    print(type(histogram), file=stderr)
+    print(len(histogram), file=stderr)
+    print(list(histogram), file=stderr)
+
+
+    # get the selectivity for the given attribute value
+    leftbound = 0
+    for i in range(num_buckets):
+        if attribute_value > histogram[i]:
+            leftbound = i
+
+
+    selectivity = (leftbound + (attribute_value - histogram[leftbound])/(histogram[leftbound+1] - histogram[leftbound])) / num_buckets
+    
+    if operator in ["<=", "<"]:
+        pass
+    elif operator in [">=", ">"]:
+        selectivity = 1 - selectivity
+    print("selectivity of query: ", selectivity, file=stderr)
+
+    print(len(histogram), file=stderr)
+    for i in range(0, len(histogram), 10):
+        print(histogram[i], file=stderr)
+    
+    
+    # get 20% below until 20% above, in 10% intervals
+    selectivities = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    
+    lower = [v for v in selectivities if v <= selectivity]
+    higher = [v for v in selectivities if v >= selectivity]
+    lower.sort()
+    higher.sort()
+
+    selectivities_required = []
+    
+    if len(lower) != 0:
+        lower_leftbound = max(len(lower) - 2, 0)
+        print('lower_leftbound, ', lower_leftbound, file=stderr)
+        for i in lower[lower_leftbound:]:
+            selectivities_required.append(i)
+
+    if len(higher) != 0:
+        higher_rightbound = min( len(higher), 2)
+        print('higher_rightbound, ', higher_rightbound, file=stderr)
+        for i in higher[:higher_rightbound]:
+            selectivities_required.append(i)
+    
+    selectivities_required.sort()
+    selectivities_required = list(set(selectivities_required))
+
+    values_required = {}
+    for i in selectivities_required:
+        index = int(i * 100)
+
+        if operator in ["<=", "<"]:
+            values_required[f"{i}"] = histogram[index]
+        elif operator in [">=", ">"]:
+            values_required[f"{1-i}"] = histogram[index]
+
+        
+
+    
+    # craft return value 
+    return_value = {    
+        'relation': relation,
+        'attribute': attribute,
+        'attribute_value': attribute_value,
+        'queried_selectivity': selectivity,
+        'histogram_bounds': values_required
+    }
+    
+            
+    print(return_value, file=stderr)
+
+    return
