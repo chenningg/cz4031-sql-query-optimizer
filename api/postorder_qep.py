@@ -80,7 +80,7 @@ def postorder_qep(plan):
             else:
                 output += "on " + curr_name + "."
 
-            print([curr_name, output], file=stderr)
+            # print([curr_name, output], file=stderr)
 
             return [curr_name, output]
 
