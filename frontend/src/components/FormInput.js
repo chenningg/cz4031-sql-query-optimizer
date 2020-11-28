@@ -52,7 +52,7 @@ const FormInput = () => {
 
 
   const parseExplanation = () => {
-    if (typeof (output.explanation) == "object") {
+    if (output.explanation && output.explanation.length > 0) {
       return (
         <ol>
           {
@@ -61,6 +61,9 @@ const FormInput = () => {
             })}
         </ol >
       );
+    }
+    else {
+      return ("");
     }
   }
 
@@ -88,9 +91,9 @@ const FormInput = () => {
     });
   }
 
-  const handleSelectivityChange = (event) => {
-    setInput({ ...input, "selectivity": event.target.value });
-  }
+  // const handleSelectivityChange = (event) => {
+  //   setInput({ ...input, "selectivity": event.target.value });
+  // }
 
   const resetForm = (event) => {
     setInput({
@@ -114,8 +117,15 @@ const FormInput = () => {
       
       <Form onSubmit={handleSubmit} className="mb-4">
         <Form.Row>
+          <Form.Group as={Col} controlId="formPredicatesInput">
+            <Form.Label>Selected predicates</Form.Label>
+            <Form.Control value={JSON.stringify(input.predicates)} readOnly />
+          </Form.Group>
+        </Form.Row>
+
+        <Form.Row>
           <Form.Group as={Col} controlId="formOptions">
-            <Form.Group controlId="formSelectivity">
+            {/* <Form.Group controlId="formSelectivity">
               <Form.Label>Selectivity</Form.Label>
               <Row>
                 <Col xs={10}>
@@ -125,7 +135,7 @@ const FormInput = () => {
                   <Form.Control className="inline-block" value={`${input.selectivity}%`} style={{ width: `55px`, padding: `0 5px`, textAlign: "center"}} readOnly />
                 </Col>
               </Row>
-            </Form.Group>
+            </Form.Group> */}
 
             <Form.Group controlId="formPredicates">
               <Form.Label>Predicates</Form.Label>
@@ -239,11 +249,6 @@ const FormInput = () => {
           </Form.Group>
 
           <Form.Group as={Col} controlId="formInput">
-            <Form.Group controlId="formPredicatesInput">
-              <Form.Label>Selected predicates</Form.Label>
-              <Form.Control as="textarea" rows="1" value={JSON.stringify(input.predicates)} readOnly />
-            </Form.Group>
-            
             <Form.Group controlId="formQuery">
                 <Form.Label>SQL Query</Form.Label>
                 <Form.Control as="textarea" rows="19" placeholder="Input SQL query..." onChange={event => setInput({...input, "query": event.target.value})} value={input.query} />
@@ -269,12 +274,9 @@ const FormInput = () => {
           <Form.Label>Output</Form.Label>
           <Form.Control as="textarea" rows="25" value={JSON.stringify(output.output, null, 2)} readOnly />
         </Form.Group>
-      </Form.Row>
-
-      <Form.Row>
         <Form.Group as={Col} controlId="formExplanation">
           <Form.Label>Explanation</Form.Label>
-          {parseExplanation()}
+          <Form.Control as="textarea" rows="25" value={parseExplanation()} readOnly />
         </Form.Group>
       </Form.Row>
     </>
