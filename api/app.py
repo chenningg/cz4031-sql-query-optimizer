@@ -69,6 +69,8 @@ def get_plans():
     if len(request_data["predicates"]) != 0:
         get_selectivities(request_data["query"], request_data["predicates"])
 
+    
+
     return json.dumps({"output": optimal_qep, "explanation": explanation})
 
 
@@ -96,25 +98,55 @@ Calculates the specific selectivities of each predicate in the query.
 
 
 def get_selectivities(sql_string, predicates):
-    try:
-        sqlparser = SQLParser()
-        sqlparser.parse_query(sql_string)
+    sqlparser = SQLParser()
+    sqlparser.parse_query(sql_string)
 
-        for predicate in predicates:
-            relation = var_prefix_to_table[predicate.split("_")[0]]
+    for predicate in predicates:
+        relation = var_prefix_to_table[predicate.split('_')[0]]
+        
+        conditions = sqlparser.comparison[predicate]
+        print('conditions: ', conditions, file=stderr)
+        
+        if conditions == []:
+            pass
+        elif conditions[0][0] in equality_comparators:
+            # required_histogram_values = most_common_value()
+            pass
+        else:
+            print("=" * 50, file=stderr)
+            required_histogram_values = get_histogram(relation, predicate, conditions)
+            print(required_histogram_values, file=stderr)
+            print(sql_string, file=stderr)
+            
+            for condition in required_histogram_values['conditions']:
+                # print(type(condition[0]), file=stderr)
+                # print(type(condition[1]), file=stderr)
+                # print(f"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}", file=stderr)
+                print("condition: ", condition, file=stderr)
+                print(required_histogram_values['conditions'][condition]['histogram_bounds'], file=stderr)
 
-            conditions = sqlparser.comparison[predicate]
+                for new_selectivity in required_histogram_values['conditions'][condition]['histogram_bounds']:
+                    print("new_selectivity: ", new_selectivity, required_histogram_values['conditions'][condition]['histogram_bounds'][new_selectivity], file=stderr)
+                
+                sql_string = re.sub(
+                    rf"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}",
+                    f"{required_histogram_values['attribute']} {condition[0]} {condition[1]}",
+                    sql_string
+                )
+                print('sql_string modified: ', sql_string, file=stderr)
 
-            if conditions[0][0] in equality_comparators:
-                # some_returned_json = most_common_value()
-                pass
-            else:
-                some_returned_json = get_histogram(relation, predicate, conditions)
+                
 
-        return some_returned_json
 
-    except:
-        print("Error", file=stderr)
+            print("=" * 50, file=stderr)
+
+
+            
+
+    
+    
+    return 
+        
 
 
 """ #################################################################### 
