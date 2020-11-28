@@ -1,7 +1,8 @@
+import sqlparse
+import collections 
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
 
 class SQLParser: 
-
     def __init__(self): 
         self.comparison = collections.defaultdict(list)
         self.parenthesis = []

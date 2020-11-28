@@ -9,5 +9,8 @@
     "start": "concurrently \"cd ./frontend && yarn start\" \"cd ./api && poetry run flask run\"",
     "start-api": "cd ./api && poetry run flask run",
     "start-frontend": "cd ./frontend && yarn start"
+  },
+  "dependencies": {
+    "pipeline": "^0.1.3"
   }
 }
