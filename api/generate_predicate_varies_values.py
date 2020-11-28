@@ -14,16 +14,16 @@ def dict_like_to_list(dict_like, output_type):
         output = dict_like[1:-1]
         output = output.split(',')
         cleaned_output = [float(i) for i in output]
+    if output_type == 'integer':
+        # print("integer output", dict_like, file=stderr)
+        output = dict_like[1:-1]
+        output = output.split(',')
+        cleaned_output = [int(i) for i in output]        
     if output_type == 'date':
         # print("date output", dict_like, file=stderr)
         output = dict_like[1:-1]
         output = output.split(',')
         cleaned_output = [date.fromisoformat(i) for i in output]
-    # if output_type == 'string':
-    #     # print("string output", dict_like, file=stderr)
-    #     output = dict_like[2:-2]
-    #     output = output.split("\",\"")
-    #     cleaned_output = [i.strip() for i in output]
     return cleaned_output
 
 
@@ -52,7 +52,9 @@ def get_histogram(relation, attribute, conditions):
         datatype = get_attribute_datatype(relation, attribute)
         attribute_datatypes.append(datatype)
         
-        if datatype in ['numeric', 'integer']:
+        if datatype == 'integer':
+            attribute_values.append(int(condition[1]))
+        if datatype == 'numeric':
             attribute_values.append(float(condition[1]))
         elif datatype == 'date':
             attribute_values.append(date.fromisoformat(condition[1][1:-1]))
@@ -87,8 +89,10 @@ def get_histogram(relation, attribute, conditions):
         # print("result", result, file=stderr)
 
         print("datatype: ", attribute_datatype, file=stderr)
-        if attribute_datatype in ['numeric', 'integer']:
+        if attribute_datatype == 'numeric':
             histogram = dict_like_to_list(result, 'float')
+        if attribute_datatype == 'integer':
+            histogram = dict_like_to_list(result, 'integer')            
         if attribute_datatype == 'date':
             histogram = dict_like_to_list(result, 'date')
         
