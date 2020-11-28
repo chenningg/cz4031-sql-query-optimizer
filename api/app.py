@@ -109,10 +109,13 @@ def get_selectivities(sql_string, predicates):
         
         if conditions == []:
             pass
-        elif conditions[0][0] in equality_comparators:
-            # required_histogram_values = most_common_value()
-            pass
+        # elif conditions[0][0] in equality_comparators:
+        #     # required_histogram_values = most_common_value()
+        #     pass
         else:
+            conditions = [v for v in conditions if v[0][0] not in equality_comparators]
+
+
             print("=" * 50, file=stderr)
             required_histogram_values = get_histogram(relation, predicate, conditions)
             print(required_histogram_values, file=stderr)
