@@ -1,4 +1,6 @@
 from flask import Flask, request
+from pipeline.sqlparser import SQLParser
+from constant.constants import var_prefix_to_table, equality_comparators, range_comparators
 import os
 from dotenv import load_dotenv
 from sys import stderr
@@ -59,101 +61,40 @@ def get_plans():
 Calculates the specific selectivities of each predicate in the query.
 #################################################################### """
 
+def histogram(): # should be made into a class for clarity 
+    statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
+                predicate_table, predicate_attribute
+            )
+
+    # Query for the histogram
+    stats = query(statement)
+
+
+def most_common_value(): # should be made into a class for clarity 
+    # Use most common values (MSV) to determine selectivity requirement
+    statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
+        predicate_table, predicate_attribute
+    )
+
+    # Query for the MSV
+    stats = query(statement)
+
 
 def get_selectivities(sql_string, predicates):
     try:
-        # Find the place in query to add additional clauses for selectivity
-        where_index = sql_string.find("where")
+        sqlparser = SQLParser()
+        sqlparser.parse_query(sql_string)
+        
+        for predicate in predicates: 
+            conditions = sqlparser.comparison[predicate]
 
-        # If there is a where statement, pull all conditions from it
-        if where_index != -1:
-            # Go to start of where statement
-            where_index += 6
-
-            # Get where clauses to find predicates
-            clauses = sql_string[where_index:].split("\n")
-            conditions = []
-
-            # Pull the where conditions from the query
-            for clause in clauses:
-                # Check if it's a where comparative clause
-                if any(i in clause for i in ">=<!"):
-                    clean_clause = "".join(clause.split("\t"))
-                    clean_clause = "".join(clean_clause.split("and "))
-                    conditions.append(clean_clause)
-
-            # Get the tablename and attribute name for querying pg_stats to get histogram
-            # We only care about predicates the user wants to vary
-            for predicate in predicates:
-                predicate_values = predicate.split("_")
-                table_names = {
-                    "r": "region",
-                    "n": "nation",
-                    "s": "supplier",
-                    "c": "customer",
-                    "p": "part",
-                    "ps": "partsupp",
-                    "o": "orders",
-                    "l": "lineitem",
-                }
-                predicate_table = table_names[predicate_values[0]]
-                predicate_attribute = predicate
-                predicate_condition = ""
-
-                # Get condition for predicate
-                for condition in conditions:
-                    if predicate in condition:
-                        predicate_condition = condition
-                        break
-
-                # If no predicate among conditions, ignore it
-                if predicate_condition == "":
-                    continue
-
-                predicate_comparator = ""
-                comparators = ["<=", ">=", "!=", ">", "<", "="]
-                for comparator in comparators:
-                    if predicate_condition.find(comparator) != -1:
-                        predicate_comparator = comparator
-                        break
-
-                predicate_conditions = re.split(">=|<=|!=|<|>|=", predicate_condition)
-
-                predicate_condition = {
-                    "left": predicate_conditions[0].strip(" "),
-                    "comparator": predicate_comparator,
-                    "right": predicate_conditions[1].strip(" "),
-                }
-
-                print(predicate_condition, file=stderr)
-
-                # Get statistics from DBMS on predicate's desired selectivity
-                # If it's an equality comparator, use MCV
-                if (
-                    predicate_condition["comparator"] == "="
-                    or predicate_condition["comparator"] == "!="
-                ):
-                    # Use most common values (MSV) to determine selectivity requirement
-                    statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-                        predicate_table, predicate_attribute
-                    )
-
-                    # Query for the MSV
-                    stats = query(statement)
-                    print(stats, file=stderr)
-                # Else if it's a range comparator, we use the histogram bounds to determine selectivity
-                else:
-                    statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-                        predicate_table, predicate_attribute
-                    )
-
-                    # Query for the histogram
-                    stats = query(statement)
-                    print(stats, file=stderr)
-
-        # No where clause, we just assume 100% for selectivity
-        else:
-            print("No where clause", file=stderr)
+            if conditions[0][0] in equality_comparators:
+                some_returned_json = most_common_value()
+            else: 
+                some_returned_json = histogram()
+        
+        return some_returned_json
+            
     except:
         print("Error", file=stderr)
 
