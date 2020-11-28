@@ -136,7 +136,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="0">
                     <Card.Body>
-                      {["r_regionkey", "r_name", "r_comment"].map((type) => (
+                      {["r_regionkey"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
@@ -149,7 +149,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="1">
                     <Card.Body>
-                      {["n_nationkey", "n_name", "n_regionkey", "n_comment"].map((type) => (
+                      {["n_nationkey", "n_regionkey"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
@@ -162,7 +162,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="2">
                     <Card.Body>
-                      {["s_suppkey", "s_name", "s_address", "s_nationkey", "s_phone", "s_acctbal", "s_comment"].map((type) => (
+                      {["s_suppkey", "s_nationkey", "s_acctbal"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
@@ -175,7 +175,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="3">
                     <Card.Body>
-                      {["c_custkey", "c_name", "c_address", "c_nationkey", "c_phone", "c_acctbal", "c_mktsegment", "c_comment"].map((type) => (
+                      {["c_custkey", "c_nationkey", "c_acctbal"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
@@ -188,7 +188,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="4">
                     <Card.Body>
-                      {["p_partkey", "p_name", "p_mfgr", "p_brand", "p_type", "p_size", "p_container", "p_retailprice", "p_comment"].map((type) => (
+                      {["p_partkey", "p_size", "p_retailprice"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
@@ -201,7 +201,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="5">
                     <Card.Body>
-                      {["ps_partkey", "ps_suppkey", "ps_availqty", "ps_supplycost", "ps_comment"].map((type) => (
+                      {["ps_partkey", "ps_suppkey", "ps_availqty", "ps_supplycost"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
@@ -214,7 +214,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="6">
                     <Card.Body>
-                      {["o_orderkey", "o_custkey", "o_orderstatus", "o_totalprice", "o_orderdate", "o_orderpriority", "o_clerk", "o_shippriority", "o_comment"].map((type) => (
+                      {["o_orderkey", "o_custkey", "o_totalprice", "o_orderdate", "o_shippriority"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
@@ -227,7 +227,7 @@ const FormInput = () => {
                   </Accordion.Toggle>
                   <Accordion.Collapse eventKey="7">
                     <Card.Body>
-                      {["l_orderkey", "l_partkey", "l_suppkey", "l_linenumber", "l_quantity", "l_extendedprice", "l_discount", "l_tax", "l_returnflag", "l_linestatus", "l_shipdate", "l_commitdate", "l_receiptdate", "l_shipinstruct", "l_shipmode"].map((type) => (
+                      {["l_orderkey", "l_partkey", "l_suppkey", "l_linenumber", "l_quantity", "l_extendedprice", "l_discount", "l_tax", "l_shipdate", "l_commitdate", "l_receiptdate"].map((type) => (
                         <Form.Check
                           type="checkbox" key={type} id={type} label={type} onClick={handleChecked} />
                       ))}
