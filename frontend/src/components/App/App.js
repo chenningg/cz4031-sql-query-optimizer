@@ -1,5 +1,5 @@
 import Container from 'react-bootstrap/Container'
-import FormInput from './FormInput';
+import FormInput from '../FormInput/FormInput';
 
 const App = () => {
   return (

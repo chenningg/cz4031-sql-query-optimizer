@@ -1,6 +1,8 @@
 import Form from 'react-bootstrap/Form'
 import Col from 'react-bootstrap/Col'
 
+import QueryVisualizer from "../QueryVisualizer/QueryVisualizer"
+
 const FormOutput = (props) => {
   const renderAlternativeSelector = () => {
     return <option>No alternatives available.</option>;
@@ -10,11 +12,6 @@ const FormOutput = (props) => {
     if (props.explanation && props.explanation.hasOwnProperty("nodes")) {
       return (
         <ol>
-          {
-            props.explanation["nodes"].map(node => {
-              console.log(JSON.stringify(node));
-              return (<li key={JSON.stringify(node)}>{JSON.stringify(node)}</li>);
-            })}
         </ol >
       );
     }
@@ -48,9 +45,8 @@ const FormOutput = (props) => {
       </Form.Row>
 
       <Form.Row>
-        <Form.Group as={Col} controlId="formOutputExplanation">
-          <Form.Label>Optimal explanation</Form.Label>
-          <Form.Control as="textarea" rows="20" value={parseExplanation()} readOnly />
+        <Form.Group as={Col} controlId="formOutputGraph">
+          <QueryVisualizer data={props.explanation}/>
         </Form.Group>
         <Form.Group as={Col} controlId="formAlternativeExplanation">
           <Form.Label>Alternative Explanation</Form.Label>

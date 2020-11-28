@@ -8,7 +8,7 @@ import Col from 'react-bootstrap/Col'
 import Accordion from 'react-bootstrap/Accordion'
 import Card from 'react-bootstrap/Card'
 
-import FormOutput from "./FormOutput";
+import FormOutput from "../FormOutput/FormOutput";
 
 const FormInput = () => {
   const [input, setInput] = useState({
@@ -31,7 +31,6 @@ const FormInput = () => {
       axios.post("/generate", input)
         .then((response) => {
           setOutput({ "output": response.data.output, "explanation": JSON.parse(response.data.explanation) });
-          console.log(output);
       })
       .catch((error) => {
         setOutput({ ...output, "output": "ERROR: Please ensure that your SQL query is executable." });

@@ -18,26 +18,30 @@ def visualize_query(plan):
         if "Plan" in plan:
             root = plan["Plan"]
             root["id"] = unique_id
+            root["depth"] = 0
             root_node = unique_id
 
             unique_id = chr(ord(unique_id) + 1)
 
             queue.append(root)
 
+            graph.add_node(
+                root["id"],
+                node_type=root["Node Type"],
+                cost=root["Startup Cost"] + root["Total Cost"],
+                depth=root["depth"],
+            )
+
             while queue:
                 curr = queue.pop(0)
                 visited.append(curr)
 
-                graph.add_node(
-                    curr["id"],
-                    node_type=curr["Node Type"],
-                    cost=curr["Startup Cost"] + curr["Total Cost"],
-                )
-
                 if "Plans" in curr:
+                    depth = curr["depth"] + 1
                     for child in curr["Plans"]:
                         if child not in visited:
                             child["id"] = unique_id
+                            child["depth"] = depth
                             unique_id = chr(ord(unique_id) + 1)
                             queue.append(child)
 
@@ -45,6 +49,7 @@ def visualize_query(plan):
                                 child["id"],
                                 node_type=curr["Node Type"],
                                 cost=curr["Startup Cost"] + curr["Total Cost"],
+                                depth=depth,
                             )
 
                             graph.add_edge(curr["id"], child["id"])
