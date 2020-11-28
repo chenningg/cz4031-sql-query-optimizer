@@ -1,6 +1,9 @@
 .queryNode {
   fill: #007bff;
-  border-radius: 4px;
+}
+
+.queryNode:hover {
+  cursor: pointer;
 }
 
 .queryNode text {

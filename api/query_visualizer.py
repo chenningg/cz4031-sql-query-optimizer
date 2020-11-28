@@ -36,13 +36,6 @@ def visualize_query(plan):
                 curr = queue.pop(0)
                 visited.append(curr)
 
-                if curr["Node Type"] == "Hash":
-                    print("================================", file=stderr)
-                    print("Plans" in curr, file=stderr)
-                    print("HMMMMMMMMMMMMMMMMMMMMMM", file=stderr)
-                    print(curr["Plans"], file=stderr)
-                    print("================================", file=stderr)
-
                 if "Plans" in curr:
                     depth = curr["depth"] + 1
                     for child in curr["Plans"]:
@@ -60,6 +53,21 @@ def visualize_query(plan):
                             )
 
                             graph.add_edge(curr["id"], child["id"])
+                # If we reach here, we are at a leaf node, add the table itself to the graph
+                else:
+                    table = {}
+                    table["id"] = unique_id
+                    table["depth"] = depth + 1
+                    unique_id = chr(ord(unique_id) + 1)
+
+                    graph.add_node(
+                        table["id"],
+                        node_type=curr["Relation Name"],
+                        cost=0,
+                        depth=table["depth"],
+                    )
+
+                    graph.add_edge(curr["id"], table["id"])
 
             # Return graph as JSON
             data = json_graph.node_link_data(graph)
