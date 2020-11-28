@@ -17,6 +17,7 @@ const FormInput = () => {
     "selectivity": 50,
   });
   const [output, setOutput] = useState({
+    "plans": 0,
     "output": "",
     "explanation": [],
   });
@@ -100,6 +101,7 @@ const FormInput = () => {
       "selectivity": 50,
     });
     setOutput({
+      "plans": 0,
       "output": "",
       "explanation": [],
     });
