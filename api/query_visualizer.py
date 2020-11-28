@@ -36,6 +36,13 @@ def visualize_query(plan):
                 curr = queue.pop(0)
                 visited.append(curr)
 
+                if curr["Node Type"] == "Hash":
+                    print("================================", file=stderr)
+                    print("Plans" in curr, file=stderr)
+                    print("HMMMMMMMMMMMMMMMMMMMMMM", file=stderr)
+                    print(curr["Plans"], file=stderr)
+                    print("================================", file=stderr)
+
                 if "Plans" in curr:
                     depth = curr["depth"] + 1
                     for child in curr["Plans"]:
@@ -47,8 +54,8 @@ def visualize_query(plan):
 
                             graph.add_node(
                                 child["id"],
-                                node_type=curr["Node Type"],
-                                cost=curr["Startup Cost"] + curr["Total Cost"],
+                                node_type=child["Node Type"],
+                                cost=child["Startup Cost"] + child["Total Cost"],
                                 depth=depth,
                             )
 

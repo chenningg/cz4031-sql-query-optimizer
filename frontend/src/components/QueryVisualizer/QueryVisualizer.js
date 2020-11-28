@@ -23,6 +23,10 @@ const QueryVisualizer = (props) => {
     }
   }
 
+  const onNodeClick = (event) => {
+
+  }
+
   return (
     getData() !== null ? 
     <DagreGraph
@@ -39,9 +43,9 @@ const QueryVisualizer = (props) => {
       shape='rect'
       fitBoundaries
       zoomable
-      onNodeClick={e => console.log(e)}
+      onNodeClick={onNodeClick}
       onRelationshipClick={e => console.log(e)}>
-    </DagreGraph > : "Test"
+    </DagreGraph > : "Waiting for data..."
   )
 }
 
