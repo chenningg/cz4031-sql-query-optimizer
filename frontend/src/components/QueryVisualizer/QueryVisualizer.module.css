@@ -1,0 +1,14 @@
+.queryNode {
+  fill: #007bff;
+  border-radius: 4px;
+}
+
+.queryNode text {
+  fill: white;
+}
+
+.queryLink path {
+  stroke: black;
+  fill: black;
+  stroke-width: 1.5px;
+}
