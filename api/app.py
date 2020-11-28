@@ -61,15 +61,13 @@ def get_plans():
     optimal_qep = query(qep_sql_string, explain=True)
     optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
 
-    explanation = postorder_qep(optimal_qep)
-    visualize_query(optimal_qep)
+    # explanation = postorder_qep(optimal_qep)
+    explanation = json.dumps(visualize_query(optimal_qep))
     optimal_qep = json.loads(optimal_qep)
 
     # Get the selectivity variation of this qep.
     if len(request_data["predicates"]) != 0:
         get_selectivities(request_data["query"], request_data["predicates"])
-
-    
 
     return json.dumps({"output": optimal_qep, "explanation": explanation})
 
@@ -102,11 +100,11 @@ def get_selectivities(sql_string, predicates):
     sqlparser.parse_query(sql_string)
 
     for predicate in predicates:
-        relation = var_prefix_to_table[predicate.split('_')[0]]
-        
+        relation = var_prefix_to_table[predicate.split("_")[0]]
+
         conditions = sqlparser.comparison[predicate]
-        print('conditions: ', conditions, file=stderr)
-        
+        print("conditions: ", conditions, file=stderr)
+
         if conditions == []:
             pass
         # elif conditions[0][0] in equality_comparators:
@@ -120,36 +118,41 @@ def get_selectivities(sql_string, predicates):
             required_histogram_values = get_histogram(relation, predicate, conditions)
             print(required_histogram_values, file=stderr)
             print(sql_string, file=stderr)
-            
-            for condition in required_histogram_values['conditions']:
+
+            for condition in required_histogram_values["conditions"]:
                 # print(type(condition[0]), file=stderr)
                 # print(type(condition[1]), file=stderr)
                 # print(f"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}", file=stderr)
                 print("condition: ", condition, file=stderr)
-                print(required_histogram_values['conditions'][condition]['histogram_bounds'], file=stderr)
+                print(
+                    required_histogram_values["conditions"][condition][
+                        "histogram_bounds"
+                    ],
+                    file=stderr,
+                )
 
-                for new_selectivity in required_histogram_values['conditions'][condition]['histogram_bounds']:
-                    print("new_selectivity: ", new_selectivity, required_histogram_values['conditions'][condition]['histogram_bounds'][new_selectivity], file=stderr)
-                
+                for new_selectivity in required_histogram_values["conditions"][
+                    condition
+                ]["histogram_bounds"]:
+                    print(
+                        "new_selectivity: ",
+                        new_selectivity,
+                        required_histogram_values["conditions"][condition][
+                            "histogram_bounds"
+                        ][new_selectivity],
+                        file=stderr,
+                    )
+
                 sql_string = re.sub(
                     rf"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}",
                     f"{required_histogram_values['attribute']} {condition[0]} {condition[1]}",
-                    sql_string
+                    sql_string,
                 )
-                print('sql_string modified: ', sql_string, file=stderr)
-
-                
-
+                print("sql_string modified: ", sql_string, file=stderr)
 
             print("=" * 50, file=stderr)
 
-
-            
-
-    
-    
-    return 
-        
+    return
 
 
 """ #################################################################### 
