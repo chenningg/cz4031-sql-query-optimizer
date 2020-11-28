@@ -1,11 +1,11 @@
 from flask import Flask, request
-from pipeline.sqlparser import SQLParser
+
 from constant.constants import var_prefix_to_table, equality_comparators, range_comparators
 
 from sys import stderr
 import ast
 import numpy as np
-import sqlparse
+# import sqlparse
 import string
 import re
 from datetime import date
@@ -15,6 +15,7 @@ from datetime import date
 from database_query_helper import *
 from generate_predicate_varies_values import *
 from postorder_qep import *
+from sqlparser import *
 
 
 # Load environment variables
@@ -39,6 +40,8 @@ def get_plans():
     # Gets the request data from the frontend
     request_data = request.json
 
+    print(request_data, file=stderr)
+
 
     # Gets the query execution plan (qep) recommended by postgres for this query
     qep_sql_string = "EXPLAIN (FORMAT JSON, BUFFERS) " + request_data["query"]
@@ -53,12 +56,8 @@ def get_plans():
 
 
     # Get the selectivity variation of this qep.
-    get_selectivities(request_data["query"], request_data["predicates"])
-
-
-    # JUST FOR TESTING AT THE MOMENT
-    # GET A HISTOGRAM
-    get_histogram()
+    if len(request_data["predicates"]) != 0:
+        get_selectivities(request_data["query"], request_data["predicates"])
 
     return json.dumps({"output": optimal_qep, "explanation": explanation})
 
@@ -67,37 +66,40 @@ def get_plans():
 Calculates the specific selectivities of each predicate in the query.
 #################################################################### """
 
-def histogram(): # should be made into a class for clarity 
-    statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-                predicate_table, predicate_attribute
-            )
+# def histogram(): # should be made into a class for clarity 
+#     statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
+#                 predicate_table, predicate_attribute
+#             )
 
-    # Query for the histogram
-    stats = query(statement)
+#     # Query for the histogram
+#     stats = query(statement)
 
 
-def most_common_value(): # should be made into a class for clarity 
-    # Use most common values (MSV) to determine selectivity requirement
-    statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-        predicate_table, predicate_attribute
-    )
+# def most_common_value(): # should be made into a class for clarity 
+#     # Use most common values (MSV) to determine selectivity requirement
+#     statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
+#         predicate_table, predicate_attribute
+#     )
 
-    # Query for the MSV
-    stats = query(statement)
+#     # Query for the MSV
+#     stats = query(statement)
 
 
 def get_selectivities(sql_string, predicates):
     try:
         sqlparser = SQLParser()
         sqlparser.parse_query(sql_string)
-        
-        for predicate in predicates: 
-            conditions = sqlparser.comparison[predicate]
 
+        for predicate in predicates:
+            relation = var_prefix_to_table[predicate.split('_')[0]]
+            
+            conditions = sqlparser.comparison[predicate]
+                        
             if conditions[0][0] in equality_comparators:
-                some_returned_json = most_common_value()
-            else: 
-                some_returned_json = histogram()
+                # some_returned_json = most_common_value()
+                pass
+            else:
+                some_returned_json = get_histogram(relation, predicate, conditions)
         
         return some_returned_json
             

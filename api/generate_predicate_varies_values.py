@@ -10,17 +10,17 @@ convert postgresql returned value that is dict-like to a list
 #################################################################### """
 def dict_like_to_list(dict_like, output_type):
     if output_type == 'float':
-        print("float output", dict_like, file=stderr)
+        # print("float output", dict_like, file=stderr)
         output = dict_like[1:-1]
         output = output.split(',')
         cleaned_output = [float(i) for i in output]
     if output_type == 'date':
-        print("date output", dict_like, file=stderr)
+        # print("date output", dict_like, file=stderr)
         output = dict_like[1:-1]
         output = output.split(',')
         cleaned_output = [date.fromisoformat(i) for i in output]
     if output_type == 'string':
-        print("string output", dict_like, file=stderr)
+        # print("string output", dict_like, file=stderr)
         output = dict_like[2:-2]
         output = output.split("\",\"")
         cleaned_output = [i.strip() for i in output]
@@ -44,107 +44,128 @@ def get_attribute_datatype(relation, attribute):
 """ #################################################################### 
 used to get the histgram for a specific attribute from a table 
 #################################################################### """
-def get_histogram():
-    # dummy values for coding first. assume we are doing a less-than query 
-    relation = 'lineitem'
-    attribute = 'l_shipdate'
-    attribute_value = date.fromisoformat('1996-02-12')
-    # attribute = 'l_extendedprice'
-    # attribute_value = 1501.51
-    # attribute_value = 923
-    # attribute_value = 51011.8
-    operator = '>='
-
-    attribute_datatype = get_attribute_datatype(relation, attribute)
-    print(attribute_datatype, file=stderr)
-
+def get_histogram(relation, attribute, conditions):
+    if len(conditions) == 0:
+        return "ERROR - please give at least one predicate to explore"
     
-    # retrieve a histogram
-    sql_string = f"SELECT histogram_bounds FROM pg_stats WHERE tablename = '{relation}' AND attname = '{attribute}';"
-    result = query(sql_string)
-    result = result[0]
-    print(result, file=stderr)
+    operators, attribute_values, attribute_datatypes = [], [], []
 
-    if attribute_datatype == 'numeric':
-        histogram = dict_like_to_list(result, 'float')
-    if attribute_datatype == 'date':
-        histogram = dict_like_to_list(result, 'date')
-    
-    num_buckets = len(histogram) - 1
+    for condition in conditions:
+        operators.append(condition[0])
+        datatype = get_attribute_datatype(relation, attribute)
+        attribute_datatypes.append(datatype)
+        
+        if datatype == 'numeric':
+            attribute_values.append(float(condition[1]))
+        elif datatype == 'date':
+            attribute_values.append(date.fromisoformat(condition[1][1:-1]))
+        else:
+            attribute_values.append(condition[1])
 
-    print(histogram, file=stderr)
-    print(type(histogram), file=stderr)
-    print(len(histogram), file=stderr)
-    print(list(histogram), file=stderr)
+    # print(operators, file=stderr)
+    # print(attribute_values, file=stderr)
+    # print(attribute_datatypes, file=stderr)
 
-    # get the selectivity for the given attribute value
-    leftbound = 0
-    for i in range(num_buckets):
-        if attribute_value > histogram[i]:
-            leftbound = i
-
-
-    selectivity = (leftbound + (attribute_value - histogram[leftbound])/(histogram[leftbound+1] - histogram[leftbound])) / num_buckets
-    
-    if operator in ["<=", "<"]:
-        pass
-    elif operator in [">=", ">"]:
-        selectivity = 1 - selectivity
-    print("selectivity of query: ", selectivity, file=stderr)
-
-    print(len(histogram), file=stderr)
-    for i in range(0, len(histogram), 10):
-        print(histogram[i], file=stderr)
-    
-    
-    # get 20% below until 20% above, in 10% intervals
-    selectivities = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    
-    lower = [v for v in selectivities if v <= selectivity]
-    higher = [v for v in selectivities if v >= selectivity]
-    lower.sort()
-    higher.sort()
-
-    selectivities_required = []
-    
-    if len(lower) != 0:
-        lower_leftbound = max(len(lower) - 2, 0)
-        print('lower_leftbound, ', lower_leftbound, file=stderr)
-        for i in lower[lower_leftbound:]:
-            selectivities_required.append(i)
-
-    if len(higher) != 0:
-        higher_rightbound = min( len(higher), 2)
-        print('higher_rightbound, ', higher_rightbound, file=stderr)
-        for i in higher[:higher_rightbound]:
-            selectivities_required.append(i)
-    
-    selectivities_required.sort()
-    selectivities_required = list(set(selectivities_required))
-
-    values_required = {}
-    for i in selectivities_required:
-        index = int(i * 100)
-
-        if operator in ["<=", "<"]:
-            values_required[f"{i}"] = histogram[index]
-        elif operator in [">=", ">"]:
-            values_required[f"{1-i}"] = histogram[index]
-
-    
-    # craft return value 
-    return_value = {    
+    return_values = {
         'relation': relation,
         'attribute': attribute,
-        'attribute_value': attribute_value,
-        'queried_selectivity': selectivity,
-        'histogram_bounds': values_required
+        'conditions': {}
     }
-    
-            
-    print(return_value, file=stderr)
 
-    return return_value
+    for i in range(len(operators)):
+        operator = operators[i]
+        attribute_value = attribute_values[i]
+        attribute_datatype = attribute_datatypes[i]
+        condition = conditions[i]
+
+        # retrieve a histogram
+        sql_string = f"SELECT histogram_bounds FROM pg_stats WHERE tablename = '{relation}' AND attname = '{attribute}';"
+        result = query(sql_string)
+        result = result[0]
+        # print(result, file=stderr)
+
+        if attribute_datatype == 'numeric':
+            histogram = dict_like_to_list(result, 'float')
+        if attribute_datatype == 'date':
+            histogram = dict_like_to_list(result, 'date')
+        
+        num_buckets = len(histogram) - 1
+
+        # print(histogram, file=stderr)
+        # print(type(histogram), file=stderr)
+        # print(len(histogram), file=stderr)
+        # print(list(histogram), file=stderr)
+
+        # get the selectivity for the given attribute value
+        leftbound = 0
+        for i in range(num_buckets):
+            if attribute_value > histogram[i]:
+                leftbound = i
+
+
+        selectivity = (leftbound + (attribute_value - histogram[leftbound])/(histogram[leftbound+1] - histogram[leftbound])) / num_buckets
+        
+        if operator in ["<=", "<"]:
+            pass
+        elif operator in [">=", ">"]:
+            selectivity = 1 - selectivity
+        print("selectivity of query: ", selectivity, file=stderr)
+
+        # print(len(histogram), file=stderr)
+        # for i in range(0, len(histogram), 10):
+        #     print(histogram[i], file=stderr)
+        
+        
+        # get 20% below until 20% above, in 10% intervals
+        selectivities = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        
+        lower = [v for v in selectivities if v <= selectivity]
+        higher = [v for v in selectivities if v >= selectivity]
+        lower.sort()
+        higher.sort()
+
+        selectivities_required = []
+        
+        
+        if len(lower) != 0:
+            lower_leftbound = max(len(lower) - 2, 0)
+            # print('lower_leftbound, ', lower_leftbound, file=stderr)
+            for i in lower[lower_leftbound:]:
+                selectivities_required.append(i)
+
+        if len(higher) != 0:
+            higher_rightbound = min( len(higher), 2)
+            # print('higher_rightbound, ', higher_rightbound, file=stderr)
+            for i in higher[:higher_rightbound]:
+                selectivities_required.append(i)
+        
+        selectivities_required.sort()
+        selectivities_required = list(set(selectivities_required))
+
+        values_required = {}
+        for i in selectivities_required:
+            index = int(i * 100)
+
+            if operator in ["<=", "<"]:
+                values_required[f"{i}"] = histogram[index]
+            elif operator in [">=", ">"]:
+                values_required[f"{1-i}"] = histogram[index]
+        
+        # craft return value 
+        return_value = {    
+            'queried_selectivity': selectivity,
+            'histogram_bounds': values_required
+        }
+        
+                
+        print(return_value, file=stderr)
+
+        
+        print("condition: ", condition, file=stderr)
+        return_values['conditions'][condition] = return_value
+
+    print(return_values, file=stderr)
+    return return_values
 
 
 # """ #################################################################### 
