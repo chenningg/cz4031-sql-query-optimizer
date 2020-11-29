@@ -37,7 +37,7 @@ class Generator:
                 for less_than, more_than in self.generate_ranges(lessthan_histogram_bounds, morethan_histogram_bounds): # ((val_less, sel_less, queried_sel), (val_more, sel_more, queried_sel))
                     more_than_path = self.find_and_replace(arr[index]['attribute'], operators[1], more_than[3], more_than[0], path)
                     both_replaced_path = self.find_and_replace(arr[index]['attribute'], operators[0], less_than[3], less_than[0], more_than_path)
-                    selectivity_data = [(arr[index]['attribute'], operators[1], less_than[3], less_than[0], less_than[2], less_than[1]), (arr[index]['attribute'], operators[0], more_than[3], more_than[0], more_than[2], more_than[1])]
+                    selectivity_data = [(arr[index]['attribute'], operators[0], less_than[3], less_than[0], less_than[2], less_than[1]), (arr[index]['attribute'], operators[1], more_than[3], more_than[0], more_than[2], more_than[1])]
                     helper(index+1, both_replaced_path, predicate_selectivities +selectivity_data)
     
         helper(0, original_sql, [])
