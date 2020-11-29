@@ -23,6 +23,7 @@ from postorder_qep import *
 from sqlparser import *
 from generator import Generator
 from query_visualizer import *
+from cost_calculation import *
 
 
 # Load environment variables
