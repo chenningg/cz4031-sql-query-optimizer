@@ -47,6 +47,8 @@ used to get the histgram for a specific attribute from a table
 def get_histogram(relation, attribute, conditions):
     operators, attribute_values, attribute_datatypes = [], [], []
     predicate_datatype = ""
+
+    # recreate the data in the correct type
     for condition in conditions:
         operators.append(condition[0])
         datatype = get_attribute_datatype(relation, attribute)
@@ -64,15 +66,12 @@ def get_histogram(relation, attribute, conditions):
             attribute_values.append(condition[1])
             predicate_datatype = "string"
 
-    
+    # fail condition
     if len(operators) == 0:
         return "ERROR - please give at least one valid predicate to explore"
     
-    # print(operators, file=stderr)
-    # print(attribute_values, file=stderr)
-    # print(attribute_datatypes, file=stderr)
-    
 
+    # dictionary object to store return result
     return_values = {
         'relation': relation,
         'attribute': attribute,
@@ -80,6 +79,8 @@ def get_histogram(relation, attribute, conditions):
         'conditions': {}
     }
 
+    
+    # do for every condition 
     for i in range(len(operators)):
         operator = operators[i]
         attribute_value = attribute_values[i]
@@ -90,7 +91,6 @@ def get_histogram(relation, attribute, conditions):
         sql_string = f"SELECT histogram_bounds FROM pg_stats WHERE tablename = '{relation}' AND attname = '{attribute}';"
         result = query(sql_string)
         result = result[0]
-        # print("result", result, file=stderr)
 
         print("datatype: ", attribute_datatype, file=stderr)
         if attribute_datatype == 'numeric':
@@ -102,34 +102,26 @@ def get_histogram(relation, attribute, conditions):
         
         num_buckets = len(histogram) - 1
 
-        # print(histogram, file=stderr)
-        # print(type(histogram), file=stderr)
-        # print(len(histogram), file=stderr)
-        # print(list(histogram), file=stderr)
-
         # get the selectivity for the given attribute value
         leftbound = 0
         for i in range(num_buckets):
             if attribute_value > histogram[i]:
                 leftbound = i
 
-
         selectivity = (leftbound + (attribute_value - histogram[leftbound])/(histogram[leftbound+1] - histogram[leftbound])) / num_buckets
         
+        
+        # inverse logic for the >= and > operators, since prior logic assumes a <= or < operator
         if operator in ["<=", "<"]:
             pass
         elif operator in [">=", ">"]:
             selectivity = 1 - selectivity
-        # print("selectivity of query: ", selectivity, file=stderr)
 
+        # set floor and ceiling
         if selectivity <= 0:
             selectivity = 0
         if selectivity >= 1:
             selectivity = 1
-
-        # print(len(histogram), file=stderr)
-        # for i in range(0, len(histogram), 10):
-        #     print(histogram[i], file=stderr)
         
         
         # get 20% below until 20% above, in 10% intervals
@@ -141,7 +133,6 @@ def get_histogram(relation, attribute, conditions):
         higher.sort()
 
         selectivities_required = []
-        
         
         if len(lower) != 0:
             lower_leftbound = max(len(lower) - 2, 0)
@@ -158,8 +149,10 @@ def get_histogram(relation, attribute, conditions):
         selectivities_required.sort()
         selectivities_required = list(set(selectivities_required))
 
-        print('selectivities_required: ', selectivities_required, file=stderr)
+        # print('selectivities_required: ', selectivities_required, file=stderr)
 
+
+        # get the corresponding values to the selectivity that we want from the histogram
         values_required = {}
         for i in selectivities_required:
             if operator in ["<=", "<"]:
@@ -174,87 +167,13 @@ def get_histogram(relation, attribute, conditions):
             elif operator in [">=", ">"]:
                 values_required[1-i] = histogram[index]
         
+
         # craft return value 
         return_value = {    
             'queried_selectivity': selectivity,
             'histogram_bounds': values_required
         }
         
-                
-        # print(return_value, file=stderr)
-
-        # print("condition: ", condition, file=stderr)
         return_values['conditions'][condition] = return_value
 
-    # print(return_values, file=stderr)
     return return_values
-
-
-# """ #################################################################### 
-# used to get the most common values for a specific attribute from a table 
-# #################################################################### """
-# def get_mcv():
-#     # dummy values for coding first. assume we are doing a less-than query 
-#     relation = 'lineitem'
-#     # attribute = 'l_shipmode'
-#     attribute = 'l_extendedprice'
-#     attribute_value = 1501.51
-#     # attribute_value = 923
-#     # attribute_value = 'DELIVER IN PERSON'
-#     operator = '='
-
-#     attribute_datatype = get_attribute_datatype(relation, attribute)
-#     print(attribute_datatype, file=stderr)
-
-    
-#     # retrieve a MCV table
-#     sql_string = f"SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{relation}' AND attname='{attribute}';"
-#     result = query(sql_string)
-#     print(result, file=stderr)
-
-#     null_frac, n_distinct, most_common_vals, most_common_freqs = result[0], result[1], result[2], result[3]
-
-#     print("="*50, file=stderr)
-#     print(null_frac, file=stderr)
-#     print(n_distinct, file=stderr)
-#     print(most_common_vals, file=stderr)
-#     print(most_common_freqs, file=stderr)
-
-
-#     if attribute_datatype == 'character':
-#         most_common_vals = dict_like_to_list(most_common_vals, 'string')
-#     if attribute_datatype == 'numeric':
-#         most_common_vals = dict_like_to_list(most_common_vals, 'float')
-    
-#     print("="*50, file=stderr)
-
-#     print(null_frac, file=stderr)
-#     print(n_distinct, file=stderr)
-#     print(most_common_vals, file=stderr)
-#     print(most_common_freqs, file=stderr)
-
-#     if attribute_value in most_common_vals:
-#         index = most_common_vals.index(attribute_value)
-#         selectivity = most_common_freqs[index]
-#         print(selectivity, file=stderr)
-#     else:
-#         selectivity = (1 - sum(most_common_freqs)) / (n_distinct - len(most_common_vals))
-        
-
-
-        
-        
-        
-#         # result = result[0]
-#         # histogram = result[1:-2]
-#         # histogram = histogram.split(',')
-#         # histogram = [float(i) for i in histogram]
-#         # num_buckets = len(histogram) - 1
-
-#         # print(histogram, file=stderr)
-#         # print(type(histogram), file=stderr)
-#         # print(len(histogram), file=stderr)
-#         # print(list(histogram), file=stderr)
-
-    
-

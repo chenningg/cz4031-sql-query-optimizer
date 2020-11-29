@@ -2,6 +2,10 @@ import datetime
 from datetime import date
 from sys import stderr
 
+
+""" #################################################################### 
+used to generate the combinations of queries for the selected predicates
+#################################################################### """
 class Generator: 
 
     def generate_plans(self, arr, original_sql): # takes in array of selectivites per predicate, from get_selectivities
