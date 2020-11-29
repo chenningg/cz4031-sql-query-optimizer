@@ -86,7 +86,9 @@ def get_plans():
         }
 
         # Get the selectivity variation of this qep. 
-        if len(request_data["predicates"]) != 0:
+        # if len(request_data["predicates"]) != 0:
+        if len(original_predicate_selectivity_data) != 0:
+            
             new_selectivities = get_selectivities(sql_query, request_data["predicates"])
             print("new selectivities: ", new_selectivities, file=stderr)
 
@@ -191,7 +193,11 @@ def get_selectivities(sql_string, predicates):
 
             conditions = sqlparser.comparison[predicate]
 
-            if conditions[0][0] in equality_comparators:
+            print("conditions", conditions, file=stderr)
+
+            if len(conditions) == 0:
+                return predicate_selectivities
+            elif conditions[0][0] in equality_comparators:
                 # some_returned_json = most_common_value()
                 pass
             else:
@@ -243,9 +249,5 @@ def get_selective_qep(sql_string, selectivities, predicates):
                     + " {} < {} and ".format(predicate, selectivity)
                     + sql_string[where_index:]
                 )
-
-            print(sql_string, file=stderr)
-        else:
-            print("No where clause", file=stderr)
     except:
         raise Exception("Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause")
