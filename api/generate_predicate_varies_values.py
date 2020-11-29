@@ -158,8 +158,15 @@ def get_histogram(relation, attribute, conditions):
         selectivities_required.sort()
         selectivities_required = list(set(selectivities_required))
 
+        print('selectivities_required: ', selectivities_required, file=stderr)
+
         values_required = {}
         for i in selectivities_required:
+            if operator in ["<=", "<"]:
+                pass
+            elif operator in [">=", ">"]:
+                i = 1 - i
+
             index = int(i * num_buckets)
 
             if operator in ["<=", "<"]:

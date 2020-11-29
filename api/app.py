@@ -61,6 +61,8 @@ def get_plans():
     # Get the selectivity variation of this qep.
     if len(request_data["predicates"]) != 0:
         new_selectivities = get_selectivities(sql_query, request_data["predicates"])
+        print("new selectivities: ", new_selectivities, file=stderr)
+
         new_plans = Generator().generate_plans(new_selectivities, sql_query) # array of (new_queries, predicate_selectivity_data)
 
         
