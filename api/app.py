@@ -84,9 +84,9 @@ def execute_plan(qep_sql_string):
     qep = query(qep_sql_string, explain=True)
     qep = json.dumps(ast.literal_eval(str(qep)))
 
-    qep = json.loads(qep)
     graph = json.dumps(visualize_query(qep))
     explanation = postorder_qep(qep)
+    qep = json.loads(qep)
     return qep, graph, explanation
 
 def create_qep_sql(sql_query): 
