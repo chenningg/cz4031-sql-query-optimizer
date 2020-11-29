@@ -10,3 +10,7 @@
   border-radius: 0.25rem;
   padding: 0.5rem 1rem;
 }
+
+.attributeTableCell {
+  background-color: #e9ecef;
+}
