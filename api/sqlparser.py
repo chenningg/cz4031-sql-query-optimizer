@@ -1,5 +1,6 @@
 import sqlparse
 import collections 
+from operator import mul, add, sub, truediv
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
 
 class SQLParser: 
@@ -12,7 +13,58 @@ class SQLParser:
         self.groupby_attributes= []
 
     def clean_query(self, sql):
-        return sql.replace("\t", "").replace("\n", " ")
+        # date
+        sql = sql.replace(" date ", " ")
+
+        # +
+        found = False
+        start, end = 0,0 
+        start = self.query_index('+ interval', sql)
+        if start != -1:
+            found = True 
+        if found: 
+            for i in range(start, len(sql)-1): 
+                if ord(sql[i]) == 10: 
+                    end = i 
+                    break
+            sql = sql[:start] + sql[end:]
+
+        # between and calculate
+        while self.query_index('between', sql) != -1: 
+            between_start = self.query_index('between', sql)
+            between_end = between_start + len('between')
+            if sql[between_end+1].isnumeric(): # between a number to number
+                i = between_end+1
+                calc_end = 0
+                while sql[i] != "a" and sql[i] != "A": 
+                    calc_end = i-1 
+                    i += 1 
+                first_expression = sql[between_end+1:calc_end+1]
+
+                while not sql[i].isnumeric(): 
+                    second_calc_start = i
+                    i += 1
+                
+                while ord(sql[i]) != 10: 
+                    second_calc_end = i
+                    i += 1
+
+                second_expression = sql[second_calc_start+1:second_calc_end+1]
+                sql = sql[:between_end+1] + "{}".format(self.calculate(first_expression)) + sql[calc_end+1:second_calc_start+1] + "{}".format(self.calculate(second_expression)) + sql[second_calc_end+1:] 
+
+            start = 0
+            for i in range(between_start-2, -1, -1): 
+                if ord(sql[i]) == 32: 
+                    start = i+1
+                    break
+            predicate_to_add = sql[start:between_start-1]
+            rest = sql[between_end+1:]
+            and_start = self.query_index('and', rest)
+            sql = sql[:between_start] + ">= " + rest[:and_start + 3] + " {} <=".format(predicate_to_add) + rest[and_start + 3:]
+        
+        print(sql)
+        sql = sql.replace("\t", "").replace("\n", " ")
+        return sql
 
     def parse_query(self, sql): 
         cleaned_sql = self.clean_query(sql)
@@ -85,3 +137,49 @@ class SQLParser:
                 where_seen = False
                 groupby_seen = False
                 orderby_seen = False
+
+    def query_index(self, inside, whole): 
+        window = len(inside)
+        n = len(whole)
+
+        if window > n:
+            return -1
+
+        base = 26
+        MOD = 10**9 + 7
+        
+        charToInt = lambda ch: ord(ch) - ord('a')
+
+        hash1, hash2 = 0, 0
+        for i in range(window): 
+            hash1 = (hash1*base + charToInt(whole[i])) % MOD 
+            hash2 = (hash2*base + charToInt(inside[i])) % MOD
+
+        if hash1 == hash2: 
+            return 0
+
+        start = 1
+        
+        while start < n - window + 1:
+            hash1 = (hash1*base - charToInt(whole[start-1]) * (base**(window)) % MOD + charToInt(whole[start+window-1])) % MOD
+            if hash1 == hash2:
+                return start
+            start += 1
+
+        return -1
+
+    def calculate(self, s):
+        
+        OP = {'*':mul,'+':add,'-':sub , '/': truediv}
+        op_set = {'+','*','-', '/'}
+        cur_op = "+"
+        cur_num, prev_num = "", ""
+        for char in s:          
+            if char in op_set:
+                cur_op = char 
+                prev_num = cur_num
+                cur_num = ""
+            elif char != " ": 
+                cur_num += char
+        return OP[cur_op](float(prev_num), float(cur_num))
+        
