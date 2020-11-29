@@ -46,7 +46,7 @@ used to get the histgram for a specific attribute from a table
 #################################################################### """
 def get_histogram(relation, attribute, conditions):
     operators, attribute_values, attribute_datatypes = [], [], []
-
+    predicate_datatype = ""
     for condition in conditions:
         operators.append(condition[0])
         datatype = get_attribute_datatype(relation, attribute)
@@ -56,11 +56,14 @@ def get_histogram(relation, attribute, conditions):
             attribute_values.append(int(condition[1]))
         if datatype == 'numeric':
             attribute_values.append(float(condition[1]))
+            predicate_datatype = "numeric"
         elif datatype == 'date':
             attribute_values.append(date.fromisoformat(condition[1][1:-1]))
+            predicate_datatype = "date"
         else:
-            # attribute_values.append(condition[1])
-            pass
+            attribute_values.append(condition[1])
+            predicate_datatype = "string"
+
     
     if len(operators) == 0:
         return "ERROR - please give at least one valid predicate to explore"
@@ -73,6 +76,7 @@ def get_histogram(relation, attribute, conditions):
     return_values = {
         'relation': relation,
         'attribute': attribute,
+        'datatype': predicate_datatype,
         'conditions': {}
     }
 
@@ -154,9 +158,9 @@ def get_histogram(relation, attribute, conditions):
             index = int(i * num_buckets)
 
             if operator in ["<=", "<"]:
-                values_required[f"{i}"] = histogram[index]
+                values_required[i] = histogram[index]
             elif operator in [">=", ">"]:
-                values_required[f"{1-i}"] = histogram[index]
+                values_required[1-i] = histogram[index]
         
         # craft return value 
         return_value = {    
@@ -166,6 +170,7 @@ def get_histogram(relation, attribute, conditions):
         
                 
         # print(return_value, file=stderr)
+
         # print("condition: ", condition, file=stderr)
         return_values['conditions'][condition] = return_value
 

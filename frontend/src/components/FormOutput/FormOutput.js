@@ -23,16 +23,31 @@ const FormOutput = (props) => {
   return (
     <>
       <Form.Row>
-        <Form.Group as={Col} controlId="formOutputHeader">
-          <h1>Output</h1>
+        <h1>Compare plans</h1>
+      </Form.Row>
+      <Form.Row>
+        <Form.Group as={Col} controlId="formAlternativeSelector">
+          <Form.Label><b>Select plan:</b></Form.Label>
+          <Form.Control as="select">
+            {renderAlternativeSelector()}
+          </Form.Control>
         </Form.Group>
         <Form.Group as={Col} controlId="formAlternativeSelector">
-          <Form.Label><b>Select alternative plan:</b></Form.Label>
+          <Form.Label><b>Select plan:</b></Form.Label>
           <Form.Control as="select">
             {renderAlternativeSelector()}
           </Form.Control>
         </Form.Group>
       </Form.Row>
+      <Form.Row>
+        <Form.Group as={Col} controlId="formGraph1">
+          <QueryVisualizer data={props.explanation}/>
+        </Form.Group>
+        <Form.Group as={Col} controlId="formGraph2">
+          <QueryVisualizer data={props.explanation}/>
+        </Form.Group>
+      </Form.Row>
+      
       <Form.Row>
         <Form.Group as={Col} controlId="formOutput">
           <Form.Label>Optimal plan</Form.Label>
@@ -40,16 +55,6 @@ const FormOutput = (props) => {
         </Form.Group>
         <Form.Group as={Col} controlId="formAlternative">
           <Form.Label>Alternative plan</Form.Label>
-          <Form.Control as="textarea" rows="20" value={parseExplanation()} readOnly />
-        </Form.Group>
-      </Form.Row>
-
-      <Form.Row>
-        <Form.Group as={Col} controlId="formOutputGraph">
-          <QueryVisualizer data={props.explanation}/>
-        </Form.Group>
-        <Form.Group as={Col} controlId="formAlternativeExplanation">
-          <Form.Label>Alternative Explanation</Form.Label>
           <Form.Control as="textarea" rows="20" value={parseExplanation()} readOnly />
         </Form.Group>
       </Form.Row>
