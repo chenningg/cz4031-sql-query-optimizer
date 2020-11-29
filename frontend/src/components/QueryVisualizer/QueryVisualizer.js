@@ -1,3 +1,4 @@
+import {useState, useEffect} from "react"
 import DagreGraph from 'dagre-d3-react'
 
 import styles from "./QueryVisualizer.module.css"
@@ -7,11 +8,20 @@ const QueryVisualizer = (props) => {
   const nodes = [];
   const links = [];
 
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipText, setTooltipText] = useState("");
+
+  const [data, setData] = useState({});
+
+  useEffect(() => {
+    setShowTooltip(false);
+  }, [props.data])
+
   const getData = () => {
     console.log(props);
     if (props.data && "nodes" in props.data && "links" in props.data) {
       props.data["nodes"].forEach((node) => {
-        nodes.push({ id: node.id, label: node.node_type, class: `${styles.queryNode}`});
+        nodes.push({ id: node.id, label: `${node.node_type}\nCost: ${node.cost.toFixed(2)}`, class: `${styles.queryNode}`});
       })
 
       props.data["links"].forEach((link) => {
@@ -24,12 +34,26 @@ const QueryVisualizer = (props) => {
   }
 
   const onNodeClick = (event) => {
-    console.log(event);
+    if ("original" in event) {
+      const nodeId = event["original"]["id"];
+      props.data["nodes"].forEach((node) => {
+        if (node["id"] === nodeId) {
+          console.log(node);
+          setTooltipText(JSON.stringify(node, null, 2));
+          setShowTooltip(true);
+          return;
+        }
+      })
+    }
   }
 
   return (
     getData() !== null ?
-    <>  
+    <div className={styles.graphWrapper}>
+      <div className={`${styles.graphTooltip} ${showTooltip ? "" : styles.hideTooltip}`}>
+          <span className={styles.tooltipText}>{tooltipText}</span>
+          <button className={styles.hideTooltipButton} onClick={() => {setShowTooltip(false)}}>Hide</button>
+      </div>  
       <DagreGraph
         nodes={nodes}
         links={links}
@@ -43,9 +67,13 @@ const QueryVisualizer = (props) => {
         animate={1000}
         shape='rect'
         fitBoundaries={true}
-        zoomable>
+        zoomable
+        onNodeClick={onNodeClick}>
       </DagreGraph >
-    </> : "Waiting for data..."
+      </div> :
+      <div className={styles.loadingGraphWrapper}>
+        <p>Waiting for data...</p>
+      </div>
   )
 }
 

@@ -53,8 +53,7 @@ def get_plans():
 
     # Gets the query execution plan (qep) recommended by postgres for this query
     qep_sql_string = (
-        "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) "
-        + request_data["query"]
+        "EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + request_data["query"]
     )
 
     # Get the optimal qep
@@ -112,7 +111,6 @@ def get_selectivities(sql_string, predicates):
         #     pass
         else:
             conditions = [v for v in conditions if v[0][0] not in equality_comparators]
-
 
             print("=" * 50, file=stderr)
             required_histogram_values = get_histogram(relation, predicate, conditions)
