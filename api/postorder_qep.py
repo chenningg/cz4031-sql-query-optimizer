@@ -96,4 +96,4 @@ def postorder_qep(plan):
         return postorder_result
 
     except:
-        print("Can't find any nodes in query execution plan.", file=stderr)
+        raise Exception("Error in postorder_qep() - unable to find any nodes in query execution plan.")

@@ -75,4 +75,4 @@ def visualize_query(plan):
         else:
             return {}
     except:
-        print("Error in query visualizer.", file=stderr)
+        raise Exception("Error in visualize_query() - unable to get the graph for the query")

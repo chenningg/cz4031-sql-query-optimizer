@@ -25,12 +25,12 @@ def connect():
 
         return conn, cur
 
-    except (Exception, psycopg2.DatabaseError) as error:
+    except:
         print("Exception occured", file=stderr)
         if conn is not None:
             conn.close()
             print("Database connection closed.", file=stderr)
-        return error, error
+        raise Exception("Error in connect() - database connection error")
 
 
 """ #################################################################### 
@@ -47,11 +47,10 @@ def query(sql_string, explain=False):
 
             conn.close()
             print("Database connection closed.", file=stderr)
+
+        if explain:
+            return data[0][0][0]
+        else:
+            return data[0]
     except:
-        data = "Error executing query - check your SQL syntax"
-
-    if explain:
-        return data[0][0][0]
-    else:
-        return data[0]
-
+        raise Exception ("Error in query() - database has problem executing query, check your SQL syntax")
