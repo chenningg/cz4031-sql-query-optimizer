@@ -53,11 +53,10 @@ def get_plans():
     # Gets the query execution plan (qep) recommended by postgres for this query
     qep_sql_string = create_qep_sql(sql_query)
 
-    optimal_qep, explanation = execute_plan(qep_sql_string)
+    original_qep, original_graph, original_explanation = execute_plan(qep_sql_string)
+    
 
-    # print(request_data, file=stderr)
-
-    all_generated_plans = {0: {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}}
+    all_generated_plans = {0: {"qep": original_qep, "graph": original_graph, "explanation": original_explanation, "predicate_selectivity_data": [], "estimated_cost_per_row": calculate_estimated_cost_per_row(original_qep)}}
     # Get the selectivity variation of this qep.
     if len(request_data["predicates"]) != 0:
         new_selectivities = get_selectivities(sql_query, request_data["predicates"])
@@ -65,24 +64,30 @@ def get_plans():
 
         new_plans = Generator().generate_plans(new_selectivities, sql_query) # array of (new_queries, predicate_selectivity_data)
 
-        
+        # predicate_selectivity_data format: n tuples of format (attribute, operator, old value, new value, old selectivity, new selectivity)
         for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
             qep_sql_string = create_qep_sql(new_query)
-            optimal_qep, explanation = execute_plan(qep_sql_string)
-            all_generated_plans[index+1] = {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}
-    print(all_generated_plans)
-    return json.dumps({"output": optimal_qep, "explanation": explanation})
+            qep, graph, explanation = execute_plan(qep_sql_string)
+            all_generated_plans[index + 1] = {"qep": qep, "graph": graph, "explanation": explanation, "predicate_selectivity_data": predicate_selectivity_data, "estimated_cost_per_row": calculate_estimated_cost_per_row(qep)}
+    
+    print("=" * 50, file=stderr)
+    for x in all_generated_plans:
+        print(all_generated_plans[x], '\n\n', file=stderr)
+    print("=" * 50, file=stderr)
+
+    
+    return json.dumps({"output": original_qep, "graph": original_graph, "explanation": original_explanation})
 
 
 def execute_plan(qep_sql_string):
     # Get the optimal qep
-    optimal_qep = query(qep_sql_string, explain=True)
-    optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
+    qep = query(qep_sql_string, explain=True)
+    qep = json.dumps(ast.literal_eval(str(qep)))
 
-    # explanation = postorder_qep(optimal_qep)
-    explanation = json.dumps(visualize_query(optimal_qep))
-    optimal_qep = json.loads(optimal_qep)
-    return optimal_qep, explanation
+    qep = json.loads(qep)
+    graph = json.dumps(visualize_query(qep))
+    explanation = postorder_qep(qep)
+    return qep, graph, explanation
 
 def create_qep_sql(sql_query): 
     return "EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql_query
