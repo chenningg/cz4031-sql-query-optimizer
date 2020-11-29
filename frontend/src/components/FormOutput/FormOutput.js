@@ -3,6 +3,7 @@ import { useState } from "react";
 import Form from 'react-bootstrap/Form';
 import Col from 'react-bootstrap/Col';
 
+import PlanComparison from "../PlanComparison/PlanComparison";
 import QueryVisualizer from "../QueryVisualizer/QueryVisualizer";
 
 import styles from "./FormOutput.module.css";
@@ -75,6 +76,7 @@ const FormOutput = (props) => {
     <>
       <Form.Row>
         <h1>Compare plans</h1>
+        <p>Select two query execution plans to compare. We compare based on the cost per row, that is, the total estimated cost of the query plan proportional to the number of rows returned. This allows us to compare across various selectivities somewhat fairly in a heuristic manner.</p>
       </Form.Row>
       <Form.Row>
         <Form.Group as={Col} controlId="formPlanSelector1">
@@ -88,6 +90,14 @@ const FormOutput = (props) => {
           <Form.Control as="select" value={planSelected[1]} onChange={(event) => {handleSelect(1, event)}}>
             {renderAlternativeSelector()}
           </Form.Control>
+        </Form.Group>
+      </Form.Row>
+      <Form.Row>
+        <Form.Group as={Col} controlId="formPlanComparison1">
+          <PlanComparison output={props.output} planId={planSelected[0]}/>
+        </Form.Group>
+        <Form.Group as={Col} controlId="formPlanComparison2">
+          <PlanComparison output={props.output} planId={planSelected[1]}/>
         </Form.Group>
       </Form.Row>
       <Form.Row>

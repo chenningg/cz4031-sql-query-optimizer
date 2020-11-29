@@ -11,13 +11,14 @@ const QueryVisualizer = (props) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipText, setTooltipText] = useState("");
 
+  // Hide tooltip when either data changes or plan changes.
   useEffect(() => {
     setShowTooltip(false);
-  }, [props.output])
+  }, [props.output, props.planId])
 
+  // Loads data for nodes and links into graph.
   const getData = () => {
     if (props.output["error"] === false && props.output["data"].hasOwnProperty(props.planId)) {
-      console.log(props.output);
       props.output.data[props.planId]["graph"]["nodes"].forEach((node) => {
         nodes.push({ id: node.id, label: `${node.node_type}\nCost: ${node.cost.toFixed(2)}`, class: `${styles.queryNode}`});
       })
@@ -31,12 +32,15 @@ const QueryVisualizer = (props) => {
     }
   }
 
+  // When clicking on a graph's node, show tooltip with extra node data.
   const onNodeClick = (event) => {
     if ("original" in event) {
       const nodeId = event["original"]["id"];
       props.output.data[props.planId]["graph"]["nodes"].forEach((node) => {
         if (node["id"] === nodeId) {
-          setTooltipText(JSON.stringify(node, null, 2));
+          let nodeData = { ...node };
+          nodeData["cost"] = parseFloat(nodeData["cost"]).toFixed(2);
+          setTooltipText(JSON.stringify(nodeData, null, 2));
           setShowTooltip(true);
           return;
         }
@@ -69,7 +73,7 @@ const QueryVisualizer = (props) => {
       </DagreGraph >
     </div> :
     <div className={styles.graphLoadingWrapper}>
-      <p>Waiting for data...</p>
+      <span>Waiting for data...</span>
     </div>
   )
 }
