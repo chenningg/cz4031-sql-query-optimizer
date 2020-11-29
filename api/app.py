@@ -56,12 +56,36 @@ def get_plans():
 
     original_qep, original_graph, original_explanation = execute_plan(qep_sql_string)
 
+    original_predicate_selectivity_data = []
+
+
+    print("=" * 100, file=stderr)
+    for predicate_data in get_selectivities(sql_query, request_data["predicates"]):
+        attribute = predicate_data['attribute']
+
+        for operator in predicate_data['conditions']:
+            queried_selectivity = predicate_data['conditions'][operator]['queried_selectivity']
+            queried_value = predicate_data['conditions'][operator]['histogram_bounds'][queried_selectivity]
+            
+            original_predicate_selectivity_data.append({
+                'attribute': attribute,
+                'operator': operator,
+                'queried_value': queried_value,
+                'new_value': None,
+                'queried_selectivity': queried_selectivity,
+                'new_selectivity': None                
+            })
+
+    # print("a: ", a, file=stderr)
+    # print("=" * 100, file=stderr)
+
+
     all_generated_plans = {
         0: {
             "qep": original_qep,
             "graph": original_graph,
             "explanation": original_explanation,
-            "predicate_selectivity_data": [],
+            "predicate_selectivity_data": original_predicate_selectivity_data,
             "estimated_cost_per_row": calculate_estimated_cost_per_row(original_qep),
         }
     }
@@ -73,16 +97,32 @@ def get_plans():
         new_plans = Generator().generate_plans(
             new_selectivities, sql_query
         )  # array of (new_queries, predicate_selectivity_data)
-
+        
         # predicate_selectivity_data format: n tuples of format (attribute, operator, old value, new value, old selectivity, new selectivity)
         for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
+
+            predicate_selectivity_combination = []
+
+            for i in range(len(predicate_selectivity_data)):
+                predicate_selectivity = {
+                        'attribute': predicate_selectivity_data[i][0],
+                        'operator': predicate_selectivity_data[i][1],
+                        'queried_value': predicate_selectivity_data[i][2],
+                        'new_value': predicate_selectivity_data[i][3],
+                        'queried_selectivity': predicate_selectivity_data[i][4],
+                        'new_selectivity': predicate_selectivity_data[i][5]
+                    }
+                predicate_selectivity_combination.append(predicate_selectivity)
+
+            # print("predicate_selectivity_combination", predicate_selectivity_combination, file=stderr)
+
             qep_sql_string = create_qep_sql(new_query)
             qep, graph, explanation = execute_plan(qep_sql_string)
             all_generated_plans[index + 1] = {
                 "qep": qep,
                 "graph": graph,
                 "explanation": explanation,
-                "predicate_selectivity_data": predicate_selectivity_data,
+                "predicate_selectivity_data": predicate_selectivity_combination,
                 "estimated_cost_per_row": calculate_estimated_cost_per_row(qep),
             }
     
@@ -100,7 +140,8 @@ def clean_json(d):
         for v in d:
             yield from clean_json(v)
     else:
-        d = d.strftime("%Y-%m-%d")
+        if type(d) == date:
+            d = d.strftime("%Y-%m-%d")
 
 
 def execute_plan(qep_sql_string):
