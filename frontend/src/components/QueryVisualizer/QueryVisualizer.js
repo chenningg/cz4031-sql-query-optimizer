@@ -11,14 +11,11 @@ const QueryVisualizer = (props) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipText, setTooltipText] = useState("");
 
-  const [data, setData] = useState({});
-
   useEffect(() => {
     setShowTooltip(false);
   }, [props.data])
 
   const getData = () => {
-    console.log(props);
     if (props.data && "nodes" in props.data && "links" in props.data) {
       props.data["nodes"].forEach((node) => {
         nodes.push({ id: node.id, label: `${node.node_type}\nCost: ${node.cost.toFixed(2)}`, class: `${styles.queryNode}`});
@@ -38,7 +35,6 @@ const QueryVisualizer = (props) => {
       const nodeId = event["original"]["id"];
       props.data["nodes"].forEach((node) => {
         if (node["id"] === nodeId) {
-          console.log(node);
           setTooltipText(JSON.stringify(node, null, 2));
           setShowTooltip(true);
           return;
