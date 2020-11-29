@@ -13,31 +13,58 @@ import FormOutput from "../FormOutput/FormOutput";
 const FormInput = () => {
   const [input, setInput] = useState({
     "query": "",
-    "predicates": [],
-    "selectivity": 50,
+    "predicates": []
   });
   const [output, setOutput] = useState({
-    "output": "",
-    "explanation": {},
+    "data": {},
+    "status": "",
+    "error": false
   });
 
   const [showAlert, setAlert] = useState(false);
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setOutput("Generating output...")
+    setOutput((oldState) => {
+      return (
+        {...oldState, "status": "Generating output...", "error": false}
+      )
+    })
 
     if (input.query !== "") {
       axios.post("/generate", input)
         .then((response) => {
-          setOutput({ "output": response.data.output, "explanation": JSON.parse(response.data.explanation) });
+          // Handle error gracefully
+          if (response.status === false) {
+            setOutput((oldState) => { 
+              return (
+                {...oldState, "status": "Error generating output. Please check your query.", "error": true}
+              )
+            })
+          }
+          else {
+            console.log(response.data);
+            setOutput((oldState) => { 
+              return (
+                {...oldState, "data": response.data["data"], "status": "Succesfully received output. Displaying...", "error": false}
+              )
+            })
+          }
       })
       .catch((error) => {
-        setOutput({ ...output, "output": "ERROR: Please ensure that your SQL query is executable." });
+        setOutput((oldState) => { 
+          return (
+            {...oldState, "status": "Error generating output. Please check your query.", "error": true}
+          )
+        })
       })
     }
     else {
-      setOutput({ ...output, "output": "ERROR: Please input an SQL query."});
+      setOutput((oldState) => { 
+        return (
+          {...oldState, "status": "Error generating output. Please input an SQL query.", "error": true}
+        )
+      })
     }
   }
 
@@ -78,13 +105,12 @@ const FormInput = () => {
   const resetForm = (event) => {
     setInput({
       "query": "",
-      "predicates": [],
-      "selectivity": 50,
+      "predicates": []
     });
     setOutput({
-      "plans": 0,
-      "output": "",
-      "explanation": {},
+      "data": {},
+      "status": "",
+      "error": false
     });
   }
 
@@ -249,7 +275,7 @@ const FormInput = () => {
         </Form.Row>
       </Form>
 
-      <FormOutput output={output.output} explanation={output.explanation}/>
+      <FormOutput output={output}/>
     </>
   )
 }

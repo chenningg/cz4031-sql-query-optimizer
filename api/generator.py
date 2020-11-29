@@ -1,12 +1,14 @@
 import datetime
 from datetime import date
+from sys import stderr
+
 class Generator: 
 
     def generate_plans(self, arr, original_sql): # takes in array of selectivites per predicate, from get_selectivities
         res = []
         def helper(index, path, predicate_selectivities): # predicate_selectivities is like (predicate0 , 0.93) * (predicate1, 0.78) * 1.2...
             if index == len(arr): 
-                res.append((path, predicate_selectivities))
+                res.append([path, predicate_selectivities])
                 return
             
             if len(arr[index]['conditions']) == 1: # only one comparator
@@ -54,3 +56,4 @@ class Generator:
             old_val = "'{}'".format(date.isoformat(old_val))
         new_query = sql_query.replace("{} {} {}".format(predicate, operator, old_val), "{} {} {}".format(predicate, operator, new_val))
         return new_query
+

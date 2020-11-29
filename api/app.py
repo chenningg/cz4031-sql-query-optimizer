@@ -35,6 +35,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config.from_object("config.Config")
 
+
 @app.route("/")
 def hello():
     return "Hey, you're not supposed to come here! But if you find this, please give us extra marks, thanks! (:"
@@ -54,29 +55,93 @@ def get_plans():
     qep_sql_string = create_qep_sql(sql_query)
 
     original_qep, original_graph, original_explanation = execute_plan(qep_sql_string)
-    
 
-    all_generated_plans = {0: {"qep": original_qep, "graph": original_graph, "explanation": original_explanation, "predicate_selectivity_data": [], "estimated_cost_per_row": calculate_estimated_cost_per_row(original_qep)}}
+    original_predicate_selectivity_data = []
+
+
+    print("=" * 100, file=stderr)
+    for predicate_data in get_selectivities(sql_query, request_data["predicates"]):
+        attribute = predicate_data['attribute']
+
+        for operator in predicate_data['conditions']:
+            queried_selectivity = predicate_data['conditions'][operator]['queried_selectivity']
+            queried_value = predicate_data['conditions'][operator]['histogram_bounds'][queried_selectivity]
+            
+            original_predicate_selectivity_data.append({
+                'attribute': attribute,
+                'operator': operator,
+                'queried_value': queried_value,
+                'new_value': None,
+                'queried_selectivity': queried_selectivity,
+                'new_selectivity': None                
+            })
+
+    # print("a: ", a, file=stderr)
+    # print("=" * 100, file=stderr)
+
+
+    all_generated_plans = {
+        0: {
+            "qep": original_qep,
+            "graph": original_graph,
+            "explanation": original_explanation,
+            "predicate_selectivity_data": original_predicate_selectivity_data,
+            "estimated_cost_per_row": calculate_estimated_cost_per_row(original_qep),
+        }
+    }
     # Get the selectivity variation of this qep.
     if len(request_data["predicates"]) != 0:
         new_selectivities = get_selectivities(sql_query, request_data["predicates"])
         print("new selectivities: ", new_selectivities, file=stderr)
 
-        new_plans = Generator().generate_plans(new_selectivities, sql_query) # array of (new_queries, predicate_selectivity_data)
-
+        new_plans = Generator().generate_plans(
+            new_selectivities, sql_query
+        )  # array of (new_queries, predicate_selectivity_data)
+        
         # predicate_selectivity_data format: n tuples of format (attribute, operator, old value, new value, old selectivity, new selectivity)
         for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
+
+            predicate_selectivity_combination = []
+
+            for i in range(len(predicate_selectivity_data)):
+                predicate_selectivity = {
+                        'attribute': predicate_selectivity_data[i][0],
+                        'operator': predicate_selectivity_data[i][1],
+                        'queried_value': predicate_selectivity_data[i][2],
+                        'new_value': predicate_selectivity_data[i][3],
+                        'queried_selectivity': predicate_selectivity_data[i][4],
+                        'new_selectivity': predicate_selectivity_data[i][5]
+                    }
+                predicate_selectivity_combination.append(predicate_selectivity)
+
+            # print("predicate_selectivity_combination", predicate_selectivity_combination, file=stderr)
+
             qep_sql_string = create_qep_sql(new_query)
             qep, graph, explanation = execute_plan(qep_sql_string)
-            all_generated_plans[index + 1] = {"qep": qep, "graph": graph, "explanation": explanation, "predicate_selectivity_data": predicate_selectivity_data, "estimated_cost_per_row": calculate_estimated_cost_per_row(qep)}
+            all_generated_plans[index + 1] = {
+                "qep": qep,
+                "graph": graph,
+                "explanation": explanation,
+                "predicate_selectivity_data": predicate_selectivity_combination,
+                "estimated_cost_per_row": calculate_estimated_cost_per_row(qep),
+            }
     
-    print("=" * 50, file=stderr)
-    for x in all_generated_plans:
-        print(all_generated_plans[x], '\n\n', file=stderr)
-    print("=" * 50, file=stderr)
+    data = {"data": all_generated_plans}
+    clean_json(data)
 
-    
-    return json.dumps({"output": original_qep, "graph": original_graph, "explanation": original_explanation})
+    return data
+
+
+def clean_json(d):
+    if isinstance(d, dict):
+        for v in d.values():
+            yield from clean_json(v)
+    elif isinstance(d, list):
+        for v in d:
+            yield from clean_json(v)
+    else:
+        if type(d) == date:
+            d = d.strftime("%Y-%m-%d")
 
 
 def execute_plan(qep_sql_string):
@@ -84,38 +149,19 @@ def execute_plan(qep_sql_string):
     qep = query(qep_sql_string, explain=True)
     qep = json.dumps(ast.literal_eval(str(qep)))
 
-    graph = json.dumps(visualize_query(qep))
+    graph = visualize_query(qep)
     explanation = postorder_qep(qep)
     qep = json.loads(qep)
     return qep, graph, explanation
 
-def create_qep_sql(sql_query): 
+
+def create_qep_sql(sql_query):
     return "EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql_query
 
 
 """ #################################################################### 
 Calculates the specific selectivities of each predicate in the query.
 #################################################################### """
-
-# def histogram(): # should be made into a class for clarity
-#     statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-#                 predicate_table, predicate_attribute
-#             )
-
-#     # Query for the histogram
-#     stats = query(statement)
-
-
-# def most_common_value(): # should be made into a class for clarity
-#     # Use most common values (MSV) to determine selectivity requirement
-#     statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-#         predicate_table, predicate_attribute
-#     )
-
-#     # Query for the MSV
-#     stats = query(statement)
-
-
 def get_selectivities(sql_string, predicates):
     try:
         sqlparser = SQLParser()
@@ -123,103 +169,47 @@ def get_selectivities(sql_string, predicates):
 
         predicate_selectivities = []
         for predicate in predicates:
-            relation = var_prefix_to_table[predicate.split('_')[0]]
-            
+            relation = var_prefix_to_table[predicate.split("_")[0]]
+
             conditions = sqlparser.comparison[predicate]
-                        
+
             if conditions[0][0] in equality_comparators:
                 # some_returned_json = most_common_value()
                 pass
             else:
                 histogram_data = get_histogram(relation, predicate, conditions)
                 res = {}
-                for k, v in histogram_data['conditions'].items(): # k is like ('<', 5)
-                    if len(k) == 2: 
+                for k, v in histogram_data["conditions"].items():  # k is like ('<', 5)
+                    if len(k) == 2:
                         operator = k[0]
                         new_v = {kk: vv for kk, vv in v.items()}
-                        cur_selectivity = new_v['queried_selectivity']
-                        new_v['histogram_bounds'][cur_selectivity] = k[1] if histogram_data['datatype'] != "date" else date.fromisoformat(k[1][1:-1]) 
+                        cur_selectivity = new_v["queried_selectivity"]
+                        new_v["histogram_bounds"][cur_selectivity] = (
+                            k[1]
+                            if histogram_data["datatype"] != "date"
+                            else date.fromisoformat(k[1][1:-1])
+                        )
                         res[operator] = new_v
-                histogram_data['conditions'] = dict(sorted(res.items())) # make sure that < always comes first
-                
-                # histogram_data returns the histogram bounds for a single predicate 
+                histogram_data["conditions"] = dict(
+                    sorted(res.items())
+                )  # make sure that < always comes first
+
+                # histogram_data returns the histogram bounds for a single predicate
                 predicate_selectivities.append(histogram_data)
 
-        print('predicate_selectivities', predicate_selectivities)
+        print("predicate_selectivities", predicate_selectivities)
         return predicate_selectivities
-        
-        # single res example 
+
+        # single res example
         # {'relation': 'orders', 'attribute': 'o_orderdate', 'datatype': 'date', 'conditions': {'<': {'queried_selectivity': 0.3060869565217391, 'histogram_bounds': {'0.2': datetime.date(1993, 4, 16), '0.4': datetime.date(1994, 8, 15), '0.3': datetime.date(1993, 12, 18), '0.5': datetime.date(1995, 4, 13), '0.3060869565217391': datetime.date(1994, 1, 1)}}, '>=': {'queried_selectivity': 0.7303999999999999, 'histogram_bounds': {'0.4': datetime.date(1995, 12, 8), '0.30000000000000004': datetime.date(1996, 8, 8), '0.19999999999999996': datetime.date(1997, 4, 11), '0.09999999999999998': datetime.date(1997, 12, 8), '0.7303999999999999': datetime.date(1993, 10, 1)}}}}
 
-                
+        # sql_string_replaced = sql_string.replace(conditions[0][1], "{{" + str(predicate) + "}}")
+        # some_returned_json['jinja_query'] = sql_string_replaced
+        # res.append(some_returned_json)
 
-                # sql_string_replaced = sql_string.replace(conditions[0][1], "{{" + str(predicate) + "}}")
-                # some_returned_json['jinja_query'] = sql_string_replaced
-                # res.append(some_returned_json)
-        
-            
     except:
         print("Error", file=stderr)
 
-#     sqlparser = SQLParser()
-#     sqlparser.parse_query(sql_string)
-
-#     for predicate in predicates:
-#         relation = var_prefix_to_table[predicate.split("_")[0]]
-
-#         conditions = sqlparser.comparison[predicate]
-#         print("conditions: ", conditions, file=stderr)
-
-#         if conditions == []:
-#             pass
-#         # elif conditions[0][0] in equality_comparators:
-#         #     # required_histogram_values = most_common_value()
-#         #     pass
-#         else:
-#             conditions = [v for v in conditions if v[0][0] not in equality_comparators]
-
-#             print("=" * 50, file=stderr)
-#             required_histogram_values = get_histogram(relation, predicate, conditions)
-#             print(required_histogram_values, file=stderr)
-#             print(sql_string, file=stderr)
-
-#             for condition in required_histogram_values["conditions"]:
-#                 # print(type(condition[0]), file=stderr)
-#                 # print(type(condition[1]), file=stderr)
-#                 # print(f"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}", file=stderr)
-#                 print("condition: ", condition, file=stderr)
-#                 print(
-#                     required_histogram_values["conditions"][condition][
-#                         "histogram_bounds"
-#                     ],
-#                     file=stderr,
-#                 )
-
-#                 for new_selectivity in required_histogram_values["conditions"][
-#                     condition
-#                 ]["histogram_bounds"]:
-#                     print(
-#                         "new_selectivity: ",
-#                         new_selectivity,
-#                         required_histogram_values["conditions"][condition][
-#                             "histogram_bounds"
-#                         ][new_selectivity],
-#                         file=stderr,
-#                     )
-
-#                 sql_string = re.sub(
-#                     rf"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}",
-#                     f"{required_histogram_values['attribute']} {condition[0]} {condition[1]}",
-#                     sql_string,
-#                 )
-#                 print("sql_string modified: ", sql_string, file=stderr)
-
-#             print("=" * 50, file=stderr)
-
-#     return
-
-
-# {'relation': 'lineitem', 'attribute': 'l_extendedprice', 'attribute_value': 51011.8, 'queried_selectivity': 0.30000000000000004, 'histogram_bounds': {'0.8': 15143.76, '0.6': 29445.06, '0.7': 22372.5, '0.5': 36378.45}}
 
 """ #################################################################### 
 Get optimal query plan for a given query by adding selectivities for each predicate.

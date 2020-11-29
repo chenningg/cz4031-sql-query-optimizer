@@ -1,0 +1,16 @@
+.explanationWrapper {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 1rem;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+.explanationWrapper > ol {
+  margin-bottom: 0.3rem;
+}
+
+.explanationLoadingWrapper {
+  padding-left: 1rem;
+}

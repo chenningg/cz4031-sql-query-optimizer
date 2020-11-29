@@ -11,17 +11,19 @@ const QueryVisualizer = (props) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipText, setTooltipText] = useState("");
 
+  // Hide tooltip when either data changes or plan changes.
   useEffect(() => {
     setShowTooltip(false);
-  }, [props.data])
+  }, [props.output, props.planId])
 
+  // Loads data for nodes and links into graph.
   const getData = () => {
-    if (props.data && "nodes" in props.data && "links" in props.data) {
-      props.data["nodes"].forEach((node) => {
+    if (props.output["error"] === false && props.output["data"].hasOwnProperty(props.planId)) {
+      props.output.data[props.planId]["graph"]["nodes"].forEach((node) => {
         nodes.push({ id: node.id, label: `${node.node_type}\nCost: ${node.cost.toFixed(2)}`, class: `${styles.queryNode}`});
       })
 
-      props.data["links"].forEach((link) => {
+      props.output.data[props.planId]["graph"]["links"].forEach((link) => {
         links.push({ source: link.source, target: link.target, class: `${styles.queryLink}` });
       })
     }
@@ -30,12 +32,15 @@ const QueryVisualizer = (props) => {
     }
   }
 
+  // When clicking on a graph's node, show tooltip with extra node data.
   const onNodeClick = (event) => {
     if ("original" in event) {
       const nodeId = event["original"]["id"];
-      props.data["nodes"].forEach((node) => {
+      props.output.data[props.planId]["graph"]["nodes"].forEach((node) => {
         if (node["id"] === nodeId) {
-          setTooltipText(JSON.stringify(node, null, 2));
+          let nodeData = { ...node };
+          nodeData["cost"] = parseFloat(nodeData["cost"]).toFixed(2);
+          setTooltipText(JSON.stringify(nodeData, null, 2));
           setShowTooltip(true);
           return;
         }
@@ -66,10 +71,10 @@ const QueryVisualizer = (props) => {
         zoomable
         onNodeClick={onNodeClick}>
       </DagreGraph >
-      </div> :
-      <div className={styles.loadingGraphWrapper}>
-        <p>Waiting for data...</p>
-      </div>
+    </div> :
+    <div className={styles.graphLoadingWrapper}>
+      <span>Waiting for data...</span>
+    </div>
   )
 }
 
