@@ -7,7 +7,6 @@ from networkx.readwrite import json_graph
 def visualize_query(plan):
     try:
         plan = json.loads(plan)
-
         queue = []
         visited = []
 
@@ -31,7 +30,7 @@ def visualize_query(plan):
                 cost=root["Startup Cost"] + root["Total Cost"],
                 depth=root["depth"],
             )
-
+            
             while queue:
                 curr = queue.pop(0)
                 visited.append(curr)
@@ -57,9 +56,9 @@ def visualize_query(plan):
                 else:
                     table = {}
                     table["id"] = unique_id
-                    table["depth"] = depth + 1
+                    table["depth"] = curr["depth"] + 1
                     unique_id = chr(ord(unique_id) + 1)
-
+                    
                     graph.add_node(
                         table["id"],
                         node_type=curr["Relation Name"],

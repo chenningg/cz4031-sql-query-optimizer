@@ -17,6 +17,7 @@ const FormInput = () => {
   });
   const [output, setOutput] = useState({
     "data": {},
+    "best_plan_id": null,
     "status": "",
     "error": false
   });
@@ -46,7 +47,7 @@ const FormInput = () => {
             console.log(response.data);
             setOutput((oldState) => { 
               return (
-                {...oldState, "data": response.data["data"], "status": "Succesfully received output. Displaying...", "error": false}
+                {...oldState, "data": response.data["data"], "best_plan_id": response.data["best_plan_id"], "status": "Succesfully received output. Displaying...", "error": false}
               )
             })
           }
@@ -109,6 +110,7 @@ const FormInput = () => {
     });
     setOutput({
       "data": {},
+      "best_plan_id": null,
       "status": "",
       "error": false
     });
@@ -146,6 +148,7 @@ const FormInput = () => {
         <Form.Row>
           <Form.Group as={Col} controlId="formPredicates">
             <Form.Label>Predicates</Form.Label>
+            <Form.Text>Select up to 4 predicates that are limited by a range condition in a WHERE clause in the query (no equality conditions). For example, <i><b>WHERE attribute_name &gt; 100</b></i></Form.Text>
             <Accordion>
               <Card>
                 <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
@@ -257,6 +260,7 @@ const FormInput = () => {
           <Form.Group as={Col} controlId="formInput">
             <Form.Group controlId="formQuery">
                 <Form.Label>SQL Query</Form.Label>
+                <Form.Text>Please input your SQL query. Ensure that the query is properly formatted. Please leave a space between every operator. For example, <i><b>attribute &gt; 5</b></i> instead of <i><b>attribute&gt;5</b></i></Form.Text>
                 <Form.Control as="textarea" rows="19" placeholder="Input SQL query..." onChange={event => setInput({...input, "query": event.target.value})} value={input.query} />
               <Row>
                 <Col>
