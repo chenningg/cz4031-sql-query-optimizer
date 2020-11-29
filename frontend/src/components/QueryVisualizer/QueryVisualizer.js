@@ -13,16 +13,16 @@ const QueryVisualizer = (props) => {
 
   useEffect(() => {
     setShowTooltip(false);
-  }, [props.data])
+  }, [props.output])
 
   const getData = () => {
-    if (props.data.hasOwnProperty(props.planId)) {
-      console.log(props.data);
-      props.data[props.planId]["graph"]["nodes"].forEach((node) => {
+    if (props.output["error"] === false && props.output["data"].hasOwnProperty(props.planId)) {
+      console.log(props.output);
+      props.output.data[props.planId]["graph"]["nodes"].forEach((node) => {
         nodes.push({ id: node.id, label: `${node.node_type}\nCost: ${node.cost.toFixed(2)}`, class: `${styles.queryNode}`});
       })
 
-      props.data[props.planId]["graph"]["links"].forEach((link) => {
+      props.output.data[props.planId]["graph"]["links"].forEach((link) => {
         links.push({ source: link.source, target: link.target, class: `${styles.queryLink}` });
       })
     }
@@ -34,7 +34,7 @@ const QueryVisualizer = (props) => {
   const onNodeClick = (event) => {
     if ("original" in event) {
       const nodeId = event["original"]["id"];
-      props.data[props.planId]["graph"]["nodes"].forEach((node) => {
+      props.output.data[props.planId]["graph"]["nodes"].forEach((node) => {
         if (node["id"] === nodeId) {
           setTooltipText(JSON.stringify(node, null, 2));
           setShowTooltip(true);
@@ -67,10 +67,10 @@ const QueryVisualizer = (props) => {
         zoomable
         onNodeClick={onNodeClick}>
       </DagreGraph >
-      </div> :
-      <div className={styles.loadingGraphWrapper}>
-        <p>Waiting for data...</p>
-      </div>
+    </div> :
+    <div className={styles.graphLoadingWrapper}>
+      <p>Waiting for data...</p>
+    </div>
   )
 }
 

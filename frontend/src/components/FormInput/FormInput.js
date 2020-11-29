@@ -110,9 +110,9 @@ const FormInput = () => {
       "selectivity": 50,
     });
     setOutput({
-      "plans": 0,
-      "output": "",
-      "explanation": {},
+      "data": {},
+      "status": "",
+      "error": false
     });
   }
 
