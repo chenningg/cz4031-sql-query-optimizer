@@ -13,8 +13,7 @@ import FormOutput from "../FormOutput/FormOutput";
 const FormInput = () => {
   const [input, setInput] = useState({
     "query": "",
-    "predicates": [],
-    "selectivity": 50,
+    "predicates": []
   });
   const [output, setOutput] = useState({
     "data": {},
@@ -106,8 +105,7 @@ const FormInput = () => {
   const resetForm = (event) => {
     setInput({
       "query": "",
-      "predicates": [],
-      "selectivity": 50,
+      "predicates": []
     });
     setOutput({
       "data": {},

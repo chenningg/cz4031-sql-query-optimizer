@@ -1,5 +1,7 @@
 import datetime
 from datetime import date
+from sys import stderr
+
 class Generator: 
 
     def generate_plans(self, arr, original_sql): # takes in array of selectivites per predicate, from get_selectivities

@@ -85,8 +85,22 @@ def get_plans():
                 "predicate_selectivity_data": predicate_selectivity_data,
                 "estimated_cost_per_row": calculate_estimated_cost_per_row(qep),
             }
+    
+    data = {"data": all_generated_plans}
+    clean_json(data)
 
-    return json.dumps({"data": all_generated_plans})
+    return data
+
+
+def clean_json(d):
+    if isinstance(d, dict):
+        for v in d.values():
+            yield from clean_json(v)
+    elif isinstance(d, list):
+        for v in d:
+            yield from clean_json(v)
+    else:
+        d = d.strftime("%Y-%m-%d")
 
 
 def execute_plan(qep_sql_string):
@@ -107,26 +121,6 @@ def create_qep_sql(sql_query):
 """ #################################################################### 
 Calculates the specific selectivities of each predicate in the query.
 #################################################################### """
-
-# def histogram(): # should be made into a class for clarity
-#     statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-#                 predicate_table, predicate_attribute
-#             )
-
-#     # Query for the histogram
-#     stats = query(statement)
-
-
-# def most_common_value(): # should be made into a class for clarity
-#     # Use most common values (MSV) to determine selectivity requirement
-#     statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
-#         predicate_table, predicate_attribute
-#     )
-
-#     # Query for the MSV
-#     stats = query(statement)
-
-
 def get_selectivities(sql_string, predicates):
     try:
         sqlparser = SQLParser()
@@ -175,66 +169,6 @@ def get_selectivities(sql_string, predicates):
     except:
         print("Error", file=stderr)
 
-
-#     sqlparser = SQLParser()
-#     sqlparser.parse_query(sql_string)
-
-#     for predicate in predicates:
-#         relation = var_prefix_to_table[predicate.split("_")[0]]
-
-#         conditions = sqlparser.comparison[predicate]
-#         print("conditions: ", conditions, file=stderr)
-
-#         if conditions == []:
-#             pass
-#         # elif conditions[0][0] in equality_comparators:
-#         #     # required_histogram_values = most_common_value()
-#         #     pass
-#         else:
-#             conditions = [v for v in conditions if v[0][0] not in equality_comparators]
-
-#             print("=" * 50, file=stderr)
-#             required_histogram_values = get_histogram(relation, predicate, conditions)
-#             print(required_histogram_values, file=stderr)
-#             print(sql_string, file=stderr)
-
-#             for condition in required_histogram_values["conditions"]:
-#                 # print(type(condition[0]), file=stderr)
-#                 # print(type(condition[1]), file=stderr)
-#                 # print(f"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}", file=stderr)
-#                 print("condition: ", condition, file=stderr)
-#                 print(
-#                     required_histogram_values["conditions"][condition][
-#                         "histogram_bounds"
-#                     ],
-#                     file=stderr,
-#                 )
-
-#                 for new_selectivity in required_histogram_values["conditions"][
-#                     condition
-#                 ]["histogram_bounds"]:
-#                     print(
-#                         "new_selectivity: ",
-#                         new_selectivity,
-#                         required_histogram_values["conditions"][condition][
-#                             "histogram_bounds"
-#                         ][new_selectivity],
-#                         file=stderr,
-#                     )
-
-#                 sql_string = re.sub(
-#                     rf"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}",
-#                     f"{required_histogram_values['attribute']} {condition[0]} {condition[1]}",
-#                     sql_string,
-#                 )
-#                 print("sql_string modified: ", sql_string, file=stderr)
-
-#             print("=" * 50, file=stderr)
-
-#     return
-
-
-# {'relation': 'lineitem', 'attribute': 'l_extendedprice', 'attribute_value': 51011.8, 'queried_selectivity': 0.30000000000000004, 'histogram_bounds': {'0.8': 15143.76, '0.6': 29445.06, '0.7': 22372.5, '0.5': 36378.45}}
 
 """ #################################################################### 
 Get optimal query plan for a given query by adding selectivities for each predicate.
