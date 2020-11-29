@@ -1,0 +1,12 @@
+.comparisonTableWrapper {
+  margin-bottom: 0;
+}
+
+.comparisonLoadingWrapper {
+  width: 100%;
+  position: relative;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+}
