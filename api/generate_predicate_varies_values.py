@@ -49,7 +49,7 @@ def get_histogram(relation, attribute, conditions):
         return "ERROR - please give at least one predicate to explore"
     
     operators, attribute_values, attribute_datatypes = [], [], []
-
+    predicate_datatype = ""
     for condition in conditions:
         operators.append(condition[0])
         datatype = get_attribute_datatype(relation, attribute)
@@ -57,10 +57,13 @@ def get_histogram(relation, attribute, conditions):
         
         if datatype == 'numeric':
             attribute_values.append(float(condition[1]))
+            predicate_datatype = "numeric"
         elif datatype == 'date':
             attribute_values.append(date.fromisoformat(condition[1][1:-1]))
+            predicate_datatype = "date"
         else:
             attribute_values.append(condition[1])
+            predicate_datatype = "string"
 
     # print(operators, file=stderr)
     # print(attribute_values, file=stderr)
@@ -69,6 +72,7 @@ def get_histogram(relation, attribute, conditions):
     return_values = {
         'relation': relation,
         'attribute': attribute,
+        'datatype': predicate_datatype,
         'conditions': {}
     }
 
@@ -109,7 +113,7 @@ def get_histogram(relation, attribute, conditions):
             pass
         elif operator in [">=", ">"]:
             selectivity = 1 - selectivity
-        print("selectivity of query: ", selectivity, file=stderr)
+        # print("selectivity of query: ", selectivity, file=stderr)
 
         # print(len(histogram), file=stderr)
         # for i in range(0, len(histogram), 10):
@@ -147,9 +151,9 @@ def get_histogram(relation, attribute, conditions):
             index = int(i * 100)
 
             if operator in ["<=", "<"]:
-                values_required[f"{i}"] = histogram[index]
+                values_required[i] = histogram[index]
             elif operator in [">=", ">"]:
-                values_required[f"{1-i}"] = histogram[index]
+                values_required[1-i] = histogram[index]
         
         # craft return value 
         return_value = {    
@@ -158,13 +162,13 @@ def get_histogram(relation, attribute, conditions):
         }
         
                 
-        print(return_value, file=stderr)
+        # print(return_value, file=stderr)
 
         
-        print("condition: ", condition, file=stderr)
+        # print("condition: ", condition, file=stderr)
         return_values['conditions'][condition] = return_value
 
-    print(return_values, file=stderr)
+    # print(return_values, file=stderr)
     return return_values
 
 

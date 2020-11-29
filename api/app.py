@@ -16,6 +16,7 @@ from database_query_helper import *
 from generate_predicate_varies_values import *
 from postorder_qep import *
 from sqlparser import *
+from generator import Generator
 
 
 # Load environment variables
@@ -25,7 +26,6 @@ load_dotenv()
 # Load Flask config
 app = Flask(__name__)
 app.config.from_object("config.Config")
-
 
 @app.route("/")
 def hello():
@@ -39,28 +39,40 @@ used to generate a query plan based on the provided query
 def get_plans():
     # Gets the request data from the frontend
     request_data = request.json
-
-    print(request_data, file=stderr)
-
-
+    sql_query = request_data["query"]
     # Gets the query execution plan (qep) recommended by postgres for this query
-    qep_sql_string = "EXPLAIN (FORMAT JSON, BUFFERS) " + request_data["query"]
+    qep_sql_string = create_qel_sql(sql_query)
+
+    optimal_qep, explanation = execute_plan(qep_sql_string)
+
+    # print(request_data, file=stderr)
+
+    all_generated_plans = {0: {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}}
+    # Get the selectivity variation of this qep.
+    if len(request_data["predicates"]) != 0:
+        new_selectivities = get_selectivities(sql_query, request_data["predicates"])
+        new_plans = Generator().generate_plans(new_selectivities, sql_query) # array of (new_queries, predicate_selectivity_data)
+
+        
+        for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
+            qep_sql_string = create_qel_sql(new_query)
+            optimal_qep, explanation = execute_plan(qep_sql_string)
+            all_generated_plans[index+1] = {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}
+    print(all_generated_plans)
+    return json.dumps({"output": optimal_qep, "explanation": explanation})
 
 
+def execute_plan(qep_sql_string):
     # Get the optimal qep
     optimal_qep = query(qep_sql_string, explain=True)
     optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
 
     explanation = postorder_qep(optimal_qep)
     optimal_qep = json.loads(optimal_qep)
+    return optimal_qep, explanation
 
-
-    # Get the selectivity variation of this qep.
-    if len(request_data["predicates"]) != 0:
-        get_selectivities(request_data["query"], request_data["predicates"])
-
-    return json.dumps({"output": optimal_qep, "explanation": explanation})
-
+def create_qel_sql(sql_query): 
+    return "EXPLAIN (FORMAT JSON, BUFFERS) " + sql_query
 
 """ #################################################################### 
 Calculates the specific selectivities of each predicate in the query.
@@ -90,6 +102,7 @@ def get_selectivities(sql_string, predicates):
         sqlparser = SQLParser()
         sqlparser.parse_query(sql_string)
 
+        predicate_selectivities = []
         for predicate in predicates:
             relation = var_prefix_to_table[predicate.split('_')[0]]
             
@@ -99,13 +112,37 @@ def get_selectivities(sql_string, predicates):
                 # some_returned_json = most_common_value()
                 pass
             else:
-                some_returned_json = get_histogram(relation, predicate, conditions)
+                histogram_data = get_histogram(relation, predicate, conditions)
+                res = {}
+                for k, v in histogram_data['conditions'].items(): # k is like ('<', 5)
+                    if len(k) == 2: 
+                        operator = k[0]
+                        new_v = {kk: vv for kk, vv in v.items()}
+                        cur_selectivity = new_v['queried_selectivity']
+                        new_v['histogram_bounds'][cur_selectivity] = k[1] if histogram_data['datatype'] != "date" else date.fromisoformat(k[1][1:-1]) 
+                        res[operator] = new_v
+                histogram_data['conditions'] = dict(sorted(res.items())) # make sure that < always comes first
+                
+                # histogram_data returns the histogram bounds for a single predicate 
+                predicate_selectivities.append(histogram_data)
+
+        print('predicate_selectivities', predicate_selectivities)
+        return predicate_selectivities
         
-        return some_returned_json
+        # single res example 
+        # {'relation': 'orders', 'attribute': 'o_orderdate', 'datatype': 'date', 'conditions': {'<': {'queried_selectivity': 0.3060869565217391, 'histogram_bounds': {'0.2': datetime.date(1993, 4, 16), '0.4': datetime.date(1994, 8, 15), '0.3': datetime.date(1993, 12, 18), '0.5': datetime.date(1995, 4, 13), '0.3060869565217391': datetime.date(1994, 1, 1)}}, '>=': {'queried_selectivity': 0.7303999999999999, 'histogram_bounds': {'0.4': datetime.date(1995, 12, 8), '0.30000000000000004': datetime.date(1996, 8, 8), '0.19999999999999996': datetime.date(1997, 4, 11), '0.09999999999999998': datetime.date(1997, 12, 8), '0.7303999999999999': datetime.date(1993, 10, 1)}}}}
+
+                
+
+                # sql_string_replaced = sql_string.replace(conditions[0][1], "{{" + str(predicate) + "}}")
+                # some_returned_json['jinja_query'] = sql_string_replaced
+                # res.append(some_returned_json)
+        
             
     except:
         print("Error", file=stderr)
 
+# {'relation': 'lineitem', 'attribute': 'l_extendedprice', 'attribute_value': 51011.8, 'queried_selectivity': 0.30000000000000004, 'histogram_bounds': {'0.8': 15143.76, '0.6': 29445.06, '0.7': 22372.5, '0.5': 36378.45}}
 
 """ #################################################################### 
 Get optimal query plan for a given query by adding selectivities for each predicate.

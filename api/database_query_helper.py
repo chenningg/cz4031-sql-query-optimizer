@@ -21,7 +21,6 @@ def connect():
             password=os.getenv("DB_PASSWORD", "postgres"),
             port=os.getenv("DB_PORT", 5432),
         )
-
         cur = conn.cursor()
 
         return conn, cur
