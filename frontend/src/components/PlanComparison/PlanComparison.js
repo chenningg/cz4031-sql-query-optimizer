@@ -1,3 +1,5 @@
+import { Fragment } from 'react'
+
 import Table from 'react-bootstrap/Table';
 
 import styles from "./PlanComparison.module.css";
@@ -27,9 +29,9 @@ const PlanComparison = (props) => {
         }
 
         return (
-          <>
+          <Fragment key={index}>
             <tr key={`${index}-attribute`} className={styles.attributeTableCell}>
-              <td colspan="2"><b>{attribute}</b></td>
+              <td colSpan={"2"}><b>{attribute}</b></td>
             </tr>
             <tr key={`${index}-value`}>
               <td><b>Value</b></td>
@@ -39,7 +41,7 @@ const PlanComparison = (props) => {
                <td><b>Selectivity</b></td>
               <td>{selectivity}</td>
             </tr>
-          </>
+          </Fragment>
         )
       })      
 

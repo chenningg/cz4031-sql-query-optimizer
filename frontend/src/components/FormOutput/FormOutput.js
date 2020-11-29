@@ -74,7 +74,7 @@ const FormOutput = (props) => {
 
   return (
     <>
-      <h1>Compare plans</h1>
+      <h1 className={styles.outputHeader}>Compare plans</h1>
       <p>Select two query execution plans to compare. We compare based on the cost per row - the total estimated cost of the query plan divided by the number of rows returned. This allows us to normalize and compare across various selectivities somewhat fairly in a heuristic manner. The lower this value is, the better.</p>
       <p>In the comparison, we also show each plan's predicate attributes, as well as the value that they have been varied to and the corresponding selectivity.</p>
       <p>We also provide a graph of the query plan's execution, and a natural langauge explanation. Click on the nodes in the graph for more information about each node.</p>
