@@ -122,6 +122,11 @@ def get_histogram(relation, attribute, conditions):
             selectivity = 1 - selectivity
         # print("selectivity of query: ", selectivity, file=stderr)
 
+        if selectivity <= 0:
+            selectivity = 0
+        if selectivity >= 1:
+            selectivity = 1
+
         # print(len(histogram), file=stderr)
         # for i in range(0, len(histogram), 10):
         #     print(histogram[i], file=stderr)
