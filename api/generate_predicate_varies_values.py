@@ -14,16 +14,16 @@ def dict_like_to_list(dict_like, output_type):
         output = dict_like[1:-1]
         output = output.split(',')
         cleaned_output = [float(i) for i in output]
+    if output_type == 'integer':
+        # print("integer output", dict_like, file=stderr)
+        output = dict_like[1:-1]
+        output = output.split(',')
+        cleaned_output = [int(i) for i in output]        
     if output_type == 'date':
         # print("date output", dict_like, file=stderr)
         output = dict_like[1:-1]
         output = output.split(',')
         cleaned_output = [date.fromisoformat(i) for i in output]
-    if output_type == 'string':
-        # print("string output", dict_like, file=stderr)
-        output = dict_like[2:-2]
-        output = output.split("\",\"")
-        cleaned_output = [i.strip() for i in output]
     return cleaned_output
 
 
@@ -31,8 +31,8 @@ def dict_like_to_list(dict_like, output_type):
 used to get the datatype of the attribute 
 #################################################################### """
 def get_attribute_datatype(relation, attribute):
-    print(relation, file=stderr)
-    print(attribute, file=stderr)
+    # print(relation, file=stderr)
+    # print(attribute, file=stderr)
     
     # retrieve a histogram
     sql_string = f"SELECT data_type FROM information_schema.columns WHERE table_name = '{relation}' AND column_name = '{attribute}';"
@@ -45,9 +45,6 @@ def get_attribute_datatype(relation, attribute):
 used to get the histgram for a specific attribute from a table 
 #################################################################### """
 def get_histogram(relation, attribute, conditions):
-    if len(conditions) == 0:
-        return "ERROR - please give at least one predicate to explore"
-    
     operators, attribute_values, attribute_datatypes = [], [], []
     predicate_datatype = ""
     for condition in conditions:
@@ -55,6 +52,8 @@ def get_histogram(relation, attribute, conditions):
         datatype = get_attribute_datatype(relation, attribute)
         attribute_datatypes.append(datatype)
         
+        if datatype == 'integer':
+            attribute_values.append(int(condition[1]))
         if datatype == 'numeric':
             attribute_values.append(float(condition[1]))
             predicate_datatype = "numeric"
@@ -65,9 +64,14 @@ def get_histogram(relation, attribute, conditions):
             attribute_values.append(condition[1])
             predicate_datatype = "string"
 
+    
+    if len(operators) == 0:
+        return "ERROR - please give at least one valid predicate to explore"
+    
     # print(operators, file=stderr)
     # print(attribute_values, file=stderr)
     # print(attribute_datatypes, file=stderr)
+    
 
     return_values = {
         'relation': relation,
@@ -86,10 +90,13 @@ def get_histogram(relation, attribute, conditions):
         sql_string = f"SELECT histogram_bounds FROM pg_stats WHERE tablename = '{relation}' AND attname = '{attribute}';"
         result = query(sql_string)
         result = result[0]
-        # print(result, file=stderr)
+        # print("result", result, file=stderr)
 
+        print("datatype: ", attribute_datatype, file=stderr)
         if attribute_datatype == 'numeric':
             histogram = dict_like_to_list(result, 'float')
+        if attribute_datatype == 'integer':
+            histogram = dict_like_to_list(result, 'integer')            
         if attribute_datatype == 'date':
             histogram = dict_like_to_list(result, 'date')
         
@@ -148,7 +155,7 @@ def get_histogram(relation, attribute, conditions):
 
         values_required = {}
         for i in selectivities_required:
-            index = int(i * 100)
+            index = int(i * num_buckets)
 
             if operator in ["<=", "<"]:
                 values_required[i] = histogram[index]
@@ -164,7 +171,6 @@ def get_histogram(relation, attribute, conditions):
                 
         # print(return_value, file=stderr)
 
-        
         # print("condition: ", condition, file=stderr)
         return_values['conditions'][condition] = return_value
 

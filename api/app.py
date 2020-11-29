@@ -1,10 +1,15 @@
 from flask import Flask, request
 
-from constant.constants import var_prefix_to_table, equality_comparators, range_comparators
+from constant.constants import (
+    var_prefix_to_table,
+    equality_comparators,
+    range_comparators,
+)
 
 from sys import stderr
 import ast
 import numpy as np
+
 # import sqlparse
 import string
 import re
@@ -17,10 +22,12 @@ from generate_predicate_varies_values import *
 from postorder_qep import *
 from sqlparser import *
 from generator import Generator
+from query_visualizer import *
 
 
 # Load environment variables
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Load Flask config
@@ -35,13 +42,15 @@ def hello():
 """ #################################################################### 
 used to generate a query plan based on the provided query
 #################################################################### """
+
+
 @app.route("/generate", methods=["POST"])
 def get_plans():
     # Gets the request data from the frontend
     request_data = request.json
     sql_query = request_data["query"]
     # Gets the query execution plan (qep) recommended by postgres for this query
-    qep_sql_string = create_qel_sql(sql_query)
+    qep_sql_string = create_qep_sql(sql_query)
 
     optimal_qep, explanation = execute_plan(qep_sql_string)
 
@@ -55,7 +64,7 @@ def get_plans():
 
         
         for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
-            qep_sql_string = create_qel_sql(new_query)
+            qep_sql_string = create_qep_sql(new_query)
             optimal_qep, explanation = execute_plan(qep_sql_string)
             all_generated_plans[index+1] = {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}
     print(all_generated_plans)
@@ -67,18 +76,20 @@ def execute_plan(qep_sql_string):
     optimal_qep = query(qep_sql_string, explain=True)
     optimal_qep = json.dumps(ast.literal_eval(str(optimal_qep)))
 
-    explanation = postorder_qep(optimal_qep)
+    # explanation = postorder_qep(optimal_qep)
+    explanation = json.dumps(visualize_query(optimal_qep))
     optimal_qep = json.loads(optimal_qep)
     return optimal_qep, explanation
 
-def create_qel_sql(sql_query): 
-    return "EXPLAIN (FORMAT JSON, BUFFERS) " + sql_query
+def create_qep_sql(sql_query): 
+    return "EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql_query
+
 
 """ #################################################################### 
 Calculates the specific selectivities of each predicate in the query.
 #################################################################### """
 
-# def histogram(): # should be made into a class for clarity 
+# def histogram(): # should be made into a class for clarity
 #     statement = "SELECT histogram_bounds FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
 #                 predicate_table, predicate_attribute
 #             )
@@ -87,7 +98,7 @@ Calculates the specific selectivities of each predicate in the query.
 #     stats = query(statement)
 
 
-# def most_common_value(): # should be made into a class for clarity 
+# def most_common_value(): # should be made into a class for clarity
 #     # Use most common values (MSV) to determine selectivity requirement
 #     statement = "SELECT null_frac, n_distinct, most_common_vals, most_common_freqs FROM pg_stats WHERE tablename='{}' AND attname='{}';".format(
 #         predicate_table, predicate_attribute
@@ -142,6 +153,64 @@ def get_selectivities(sql_string, predicates):
     except:
         print("Error", file=stderr)
 
+#     sqlparser = SQLParser()
+#     sqlparser.parse_query(sql_string)
+
+#     for predicate in predicates:
+#         relation = var_prefix_to_table[predicate.split("_")[0]]
+
+#         conditions = sqlparser.comparison[predicate]
+#         print("conditions: ", conditions, file=stderr)
+
+#         if conditions == []:
+#             pass
+#         # elif conditions[0][0] in equality_comparators:
+#         #     # required_histogram_values = most_common_value()
+#         #     pass
+#         else:
+#             conditions = [v for v in conditions if v[0][0] not in equality_comparators]
+
+#             print("=" * 50, file=stderr)
+#             required_histogram_values = get_histogram(relation, predicate, conditions)
+#             print(required_histogram_values, file=stderr)
+#             print(sql_string, file=stderr)
+
+#             for condition in required_histogram_values["conditions"]:
+#                 # print(type(condition[0]), file=stderr)
+#                 # print(type(condition[1]), file=stderr)
+#                 # print(f"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}", file=stderr)
+#                 print("condition: ", condition, file=stderr)
+#                 print(
+#                     required_histogram_values["conditions"][condition][
+#                         "histogram_bounds"
+#                     ],
+#                     file=stderr,
+#                 )
+
+#                 for new_selectivity in required_histogram_values["conditions"][
+#                     condition
+#                 ]["histogram_bounds"]:
+#                     print(
+#                         "new_selectivity: ",
+#                         new_selectivity,
+#                         required_histogram_values["conditions"][condition][
+#                             "histogram_bounds"
+#                         ][new_selectivity],
+#                         file=stderr,
+#                     )
+
+#                 sql_string = re.sub(
+#                     rf"{required_histogram_values['attribute']}\s*{condition[0]}\s*{condition[1]}",
+#                     f"{required_histogram_values['attribute']} {condition[0]} {condition[1]}",
+#                     sql_string,
+#                 )
+#                 print("sql_string modified: ", sql_string, file=stderr)
+
+#             print("=" * 50, file=stderr)
+
+#     return
+
+
 # {'relation': 'lineitem', 'attribute': 'l_extendedprice', 'attribute_value': 51011.8, 'queried_selectivity': 0.30000000000000004, 'histogram_bounds': {'0.8': 15143.76, '0.6': 29445.06, '0.7': 22372.5, '0.5': 36378.45}}
 
 """ #################################################################### 
@@ -173,11 +242,3 @@ def get_selective_qep(sql_string, selectivities, predicates):
             print("No where clause", file=stderr)
     except:
         print("ERROR!", file=stderr)
-
-
-
-
-
-
-
-
