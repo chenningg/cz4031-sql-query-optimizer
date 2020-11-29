@@ -35,6 +35,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config.from_object("config.Config")
 
+
 @app.route("/")
 def hello():
     return "Hey, you're not supposed to come here! But if you find this, please give us extra marks, thanks! (:"
@@ -54,29 +55,38 @@ def get_plans():
     qep_sql_string = create_qep_sql(sql_query)
 
     original_qep, original_graph, original_explanation = execute_plan(qep_sql_string)
-    
 
-    all_generated_plans = {0: {"qep": original_qep, "graph": original_graph, "explanation": original_explanation, "predicate_selectivity_data": [], "estimated_cost_per_row": calculate_estimated_cost_per_row(original_qep)}}
+    all_generated_plans = {
+        0: {
+            "qep": original_qep,
+            "graph": original_graph,
+            "explanation": original_explanation,
+            "predicate_selectivity_data": [],
+            "estimated_cost_per_row": calculate_estimated_cost_per_row(original_qep),
+        }
+    }
     # Get the selectivity variation of this qep.
     if len(request_data["predicates"]) != 0:
         new_selectivities = get_selectivities(sql_query, request_data["predicates"])
         print("new selectivities: ", new_selectivities, file=stderr)
 
-        new_plans = Generator().generate_plans(new_selectivities, sql_query) # array of (new_queries, predicate_selectivity_data)
+        new_plans = Generator().generate_plans(
+            new_selectivities, sql_query
+        )  # array of (new_queries, predicate_selectivity_data)
 
         # predicate_selectivity_data format: n tuples of format (attribute, operator, old value, new value, old selectivity, new selectivity)
         for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
             qep_sql_string = create_qep_sql(new_query)
             qep, graph, explanation = execute_plan(qep_sql_string)
-            all_generated_plans[index + 1] = {"qep": qep, "graph": graph, "explanation": explanation, "predicate_selectivity_data": predicate_selectivity_data, "estimated_cost_per_row": calculate_estimated_cost_per_row(qep)}
-    
-    print("=" * 50, file=stderr)
-    for x in all_generated_plans:
-        print(all_generated_plans[x], '\n\n', file=stderr)
-    print("=" * 50, file=stderr)
+            all_generated_plans[index + 1] = {
+                "qep": qep,
+                "graph": graph,
+                "explanation": explanation,
+                "predicate_selectivity_data": predicate_selectivity_data,
+                "estimated_cost_per_row": calculate_estimated_cost_per_row(qep),
+            }
 
-    
-    return json.dumps({"output": original_qep, "graph": original_graph, "explanation": original_explanation})
+    return json.dumps({"data": all_generated_plans})
 
 
 def execute_plan(qep_sql_string):
@@ -84,12 +94,13 @@ def execute_plan(qep_sql_string):
     qep = query(qep_sql_string, explain=True)
     qep = json.dumps(ast.literal_eval(str(qep)))
 
-    graph = json.dumps(visualize_query(qep))
+    graph = visualize_query(qep)
     explanation = postorder_qep(qep)
     qep = json.loads(qep)
     return qep, graph, explanation
 
-def create_qep_sql(sql_query): 
+
+def create_qep_sql(sql_query):
     return "EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql_query
 
 
@@ -123,43 +134,47 @@ def get_selectivities(sql_string, predicates):
 
         predicate_selectivities = []
         for predicate in predicates:
-            relation = var_prefix_to_table[predicate.split('_')[0]]
-            
+            relation = var_prefix_to_table[predicate.split("_")[0]]
+
             conditions = sqlparser.comparison[predicate]
-                        
+
             if conditions[0][0] in equality_comparators:
                 # some_returned_json = most_common_value()
                 pass
             else:
                 histogram_data = get_histogram(relation, predicate, conditions)
                 res = {}
-                for k, v in histogram_data['conditions'].items(): # k is like ('<', 5)
-                    if len(k) == 2: 
+                for k, v in histogram_data["conditions"].items():  # k is like ('<', 5)
+                    if len(k) == 2:
                         operator = k[0]
                         new_v = {kk: vv for kk, vv in v.items()}
-                        cur_selectivity = new_v['queried_selectivity']
-                        new_v['histogram_bounds'][cur_selectivity] = k[1] if histogram_data['datatype'] != "date" else date.fromisoformat(k[1][1:-1]) 
+                        cur_selectivity = new_v["queried_selectivity"]
+                        new_v["histogram_bounds"][cur_selectivity] = (
+                            k[1]
+                            if histogram_data["datatype"] != "date"
+                            else date.fromisoformat(k[1][1:-1])
+                        )
                         res[operator] = new_v
-                histogram_data['conditions'] = dict(sorted(res.items())) # make sure that < always comes first
-                
-                # histogram_data returns the histogram bounds for a single predicate 
+                histogram_data["conditions"] = dict(
+                    sorted(res.items())
+                )  # make sure that < always comes first
+
+                # histogram_data returns the histogram bounds for a single predicate
                 predicate_selectivities.append(histogram_data)
 
-        print('predicate_selectivities', predicate_selectivities)
+        print("predicate_selectivities", predicate_selectivities)
         return predicate_selectivities
-        
-        # single res example 
+
+        # single res example
         # {'relation': 'orders', 'attribute': 'o_orderdate', 'datatype': 'date', 'conditions': {'<': {'queried_selectivity': 0.3060869565217391, 'histogram_bounds': {'0.2': datetime.date(1993, 4, 16), '0.4': datetime.date(1994, 8, 15), '0.3': datetime.date(1993, 12, 18), '0.5': datetime.date(1995, 4, 13), '0.3060869565217391': datetime.date(1994, 1, 1)}}, '>=': {'queried_selectivity': 0.7303999999999999, 'histogram_bounds': {'0.4': datetime.date(1995, 12, 8), '0.30000000000000004': datetime.date(1996, 8, 8), '0.19999999999999996': datetime.date(1997, 4, 11), '0.09999999999999998': datetime.date(1997, 12, 8), '0.7303999999999999': datetime.date(1993, 10, 1)}}}}
 
-                
+        # sql_string_replaced = sql_string.replace(conditions[0][1], "{{" + str(predicate) + "}}")
+        # some_returned_json['jinja_query'] = sql_string_replaced
+        # res.append(some_returned_json)
 
-                # sql_string_replaced = sql_string.replace(conditions[0][1], "{{" + str(predicate) + "}}")
-                # some_returned_json['jinja_query'] = sql_string_replaced
-                # res.append(some_returned_json)
-        
-            
     except:
         print("Error", file=stderr)
+
 
 #     sqlparser = SQLParser()
 #     sqlparser.parse_query(sql_string)
