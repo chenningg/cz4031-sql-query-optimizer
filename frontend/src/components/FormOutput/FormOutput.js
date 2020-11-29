@@ -92,10 +92,10 @@ const FormOutput = (props) => {
       </Form.Row>
       <Form.Row>
         <Form.Group as={Col} controlId="formGraph1">
-          <QueryVisualizer data={props.output["data"]} planId={planSelected[0]}/>
+          <QueryVisualizer output={props.output} planId={planSelected[0]}/>
         </Form.Group>
         <Form.Group as={Col} controlId="formGraph2">
-          <QueryVisualizer data={props.output["data"]} planId={planSelected[1]}/>
+          <QueryVisualizer output={props.output} planId={planSelected[1]}/>
         </Form.Group>
       </Form.Row>
       
