@@ -57,18 +57,20 @@ def get_plans():
 
     # print(request_data, file=stderr)
 
-    all_generated_plans = {0: {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}}
+    # all_generated_plans = {0: {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}}
     # Get the selectivity variation of this qep.
     if len(request_data["predicates"]) != 0:
         new_selectivities = get_selectivities(sql_query, request_data["predicates"])
-        new_plans = Generator().generate_plans(new_selectivities, sql_query) # array of (new_queries, predicate_selectivity_data)
+        print("new selectivities: ", new_selectivities, file=stderr)
+
+    #     new_plans = Generator().generate_plans(new_selectivities, sql_query) # array of (new_queries, predicate_selectivity_data)
 
         
-        for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
-            qep_sql_string = create_qep_sql(new_query)
-            optimal_qep, explanation = execute_plan(qep_sql_string)
-            all_generated_plans[index+1] = {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}
-    print(all_generated_plans)
+    #     for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
+    #         qep_sql_string = create_qep_sql(new_query)
+    #         optimal_qep, explanation = execute_plan(qep_sql_string)
+    #         all_generated_plans[index+1] = {"data": {"optimal_qep": optimal_qep, "explanation": explanation}}
+    # print(all_generated_plans)
     return json.dumps({"output": optimal_qep, "explanation": explanation})
 
 
