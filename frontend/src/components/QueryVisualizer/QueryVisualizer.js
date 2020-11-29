@@ -16,12 +16,13 @@ const QueryVisualizer = (props) => {
   }, [props.data])
 
   const getData = () => {
-    if (props.data && "nodes" in props.data && "links" in props.data) {
-      props.data["nodes"].forEach((node) => {
+    if (props.data.hasOwnProperty(props.planId)) {
+      console.log(props.data);
+      props.data[props.planId]["graph"]["nodes"].forEach((node) => {
         nodes.push({ id: node.id, label: `${node.node_type}\nCost: ${node.cost.toFixed(2)}`, class: `${styles.queryNode}`});
       })
 
-      props.data["links"].forEach((link) => {
+      props.data[props.planId]["graph"]["links"].forEach((link) => {
         links.push({ source: link.source, target: link.target, class: `${styles.queryLink}` });
       })
     }
@@ -33,7 +34,7 @@ const QueryVisualizer = (props) => {
   const onNodeClick = (event) => {
     if ("original" in event) {
       const nodeId = event["original"]["id"];
-      props.data["nodes"].forEach((node) => {
+      props.data[props.planId]["graph"]["nodes"].forEach((node) => {
         if (node["id"] === nodeId) {
           setTooltipText(JSON.stringify(node, null, 2));
           setShowTooltip(true);
