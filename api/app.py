@@ -44,6 +44,8 @@ def hello():
 """ #################################################################### 
 used to generate a query plan based on the provided query
 #################################################################### """
+
+
 @app.route("/generate", methods=["POST"])
 def get_plans():
     try:
@@ -53,49 +55,57 @@ def get_plans():
 
         # Gets the query execution plan (qep) recommended by postgres for this query and also the graph and explanation
         qep_sql_string = create_qep_sql(sql_query)
-        original_qep, original_graph, original_explanation = execute_plan(qep_sql_string)
+        original_qep, original_graph, original_explanation = execute_plan(
+            qep_sql_string
+        )
 
-        # Get the values and selectivity of various attributes for the original query 
+        # Get the values and selectivity of various attributes for the original query
         original_predicate_selectivity_data = []
 
         for predicate_data in get_selectivities(sql_query, request_data["predicates"]):
-            attribute = predicate_data['attribute']
+            attribute = predicate_data["attribute"]
 
-            for operator in predicate_data['conditions']:
-                queried_selectivity = predicate_data['conditions'][operator]['queried_selectivity']
-                queried_value = predicate_data['conditions'][operator]['histogram_bounds'][queried_selectivity]
-                
-                original_predicate_selectivity_data.append({
-                    'attribute': attribute,
-                    'operator': operator,
-                    'queried_value': queried_value,
-                    'new_value': None,
-                    'queried_selectivity': queried_selectivity,
-                    'new_selectivity': None                
-                })
+            for operator in predicate_data["conditions"]:
+                queried_selectivity = predicate_data["conditions"][operator][
+                    "queried_selectivity"
+                ]
+                queried_value = predicate_data["conditions"][operator][
+                    "histogram_bounds"
+                ][queried_selectivity]
 
-        # Add the original query and its details into the dictionary that will contain all queries 
+                original_predicate_selectivity_data.append(
+                    {
+                        "attribute": attribute,
+                        "operator": operator,
+                        "queried_value": queried_value,
+                        "new_value": None,
+                        "queried_selectivity": queried_selectivity,
+                        "new_selectivity": None,
+                    }
+                )
+
+        # Add the original query and its details into the dictionary that will contain all queries
         all_generated_plans = {
             0: {
                 "qep": original_qep,
                 "graph": original_graph,
                 "explanation": original_explanation,
                 "predicate_selectivity_data": original_predicate_selectivity_data,
-                "estimated_cost_per_row": calculate_estimated_cost_per_row(original_qep),
+                "estimated_cost_per_row": calculate_estimated_cost_per_row(
+                    original_qep
+                ),
             }
         }
 
-        # Get the selectivity variation of this qep. 
+        # Get the selectivity variation of this qep.
         # if len(request_data["predicates"]) != 0:
         if len(original_predicate_selectivity_data) != 0:
-            
+
             new_selectivities = get_selectivities(sql_query, request_data["predicates"])
 
             # array of (new_queries, predicate_selectivity_data)
-            new_plans = Generator().generate_plans(
-                new_selectivities, sql_query
-            )  
-            
+            new_plans = Generator().generate_plans(new_selectivities, sql_query)
+
             # loop through every potential new plan and fire off a query, then get the result and save to our result dictionary
             for index, (new_query, predicate_selectivity_data) in enumerate(new_plans):
                 predicate_selectivity_combination = []
@@ -103,13 +113,13 @@ def get_plans():
                 # predicate_selectivity_data format: n tuples of format (attribute, operator, old value, new value, old selectivity, new selectivity)
                 for i in range(len(predicate_selectivity_data)):
                     predicate_selectivity = {
-                            'attribute': predicate_selectivity_data[i][0],
-                            'operator': predicate_selectivity_data[i][1],
-                            'queried_value': predicate_selectivity_data[i][2],
-                            'new_value': predicate_selectivity_data[i][3],
-                            'queried_selectivity': predicate_selectivity_data[i][4],
-                            'new_selectivity': predicate_selectivity_data[i][5]
-                        }
+                        "attribute": predicate_selectivity_data[i][0],
+                        "operator": predicate_selectivity_data[i][1],
+                        "queried_value": predicate_selectivity_data[i][2],
+                        "new_value": predicate_selectivity_data[i][3],
+                        "queried_selectivity": predicate_selectivity_data[i][4],
+                        "new_selectivity": predicate_selectivity_data[i][5],
+                    }
                     predicate_selectivity_combination.append(predicate_selectivity)
 
                 qep_sql_string = create_qep_sql(new_query)
@@ -125,8 +135,13 @@ def get_plans():
         # get the best plan out of all the generated plans
         best_plan_id = get_best_plan_id(all_generated_plans)
 
-        # clean out the date objects for json serializability 
-        data = {"data": all_generated_plans, "best_plan_id": best_plan_id}
+        # clean out the date objects for json serializability
+        data = {
+            "data": all_generated_plans,
+            "best_plan_id": best_plan_id,
+            "status": "Successfully executed query.",
+            "error": False,
+        }
         clean_json(data)
 
         return data
@@ -136,11 +151,11 @@ def get_plans():
         return {"status": str(e), "error": True}
 
 
-
-
 """ #################################################################### 
 used to clean a json dictionary 
 #################################################################### """
+
+
 def clean_json(d):
     try:
         if isinstance(d, dict):
@@ -160,6 +175,8 @@ def clean_json(d):
 """ #################################################################### 
 used to get the qep, graph and explanation for a given query string
 #################################################################### """
+
+
 def execute_plan(qep_sql_string):
     try:
         # Get the optimal qep
@@ -171,7 +188,9 @@ def execute_plan(qep_sql_string):
         qep = json.loads(qep)
         return qep, graph, explanation
     except:
-        raise Exception("Error in execute_plan() - unable to get QEP, graph, explanation")
+        raise Exception(
+            "Error in execute_plan() - unable to get QEP, graph, explanation"
+        )
 
 
 def create_qep_sql(sql_query):
@@ -184,6 +203,8 @@ def create_qep_sql(sql_query):
 """ #################################################################### 
 Calculates the specific selectivities of each predicate in the query.
 #################################################################### """
+
+
 def get_selectivities(sql_string, predicates):
     try:
         sqlparser = SQLParser()
@@ -223,13 +244,17 @@ def get_selectivities(sql_string, predicates):
         return predicate_selectivities
 
     except:
-        raise Exception("error in get_selectivities() - unable to get the different selectivities for predicates")
+        raise Exception(
+            "error in get_selectivities() - unable to get the different selectivities for predicates"
+        )
 
 
 """ #################################################################### 
 Get optimal query plan for a given query by adding selectivities for each predicate.
 Selectivity must have same number of keys as predicates.
 #################################################################### """
+
+
 def get_selective_qep(sql_string, selectivities, predicates):
     try:
         # Find the place in query to add additional clauses for selectivity
@@ -248,27 +273,39 @@ def get_selective_qep(sql_string, selectivities, predicates):
                     + sql_string[where_index:]
                 )
     except:
-        raise Exception("Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause")
+        raise Exception(
+            "Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause"
+        )
 
 
 """ #################################################################### 
 get the best plan id in terms of cost, and the plan must be different from original plan
 #################################################################### """
+
+
 def get_best_plan_id(all_generated_plans):
     best_plan_id_cost = all_generated_plans[0]["estimated_cost_per_row"]
     best_plan_id = 0
-    
+
     for plan_id in all_generated_plans:
-        
+
         # ignore the original plan
         if plan_id != 0:
 
             # if the estimated cost per row is lower, the plan might be better
-            if all_generated_plans[plan_id]["estimated_cost_per_row"] < best_plan_id_cost:
+            if (
+                all_generated_plans[plan_id]["estimated_cost_per_row"]
+                < best_plan_id_cost
+            ):
 
                 # if the plan is not the same plan as original plan
-                if all_generated_plans[plan_id]["explanation"] != all_generated_plans[0]["explanation"]:
-                    best_plan_id_cost = all_generated_plans[plan_id]["estimated_cost_per_row"]
+                if (
+                    all_generated_plans[plan_id]["explanation"]
+                    != all_generated_plans[0]["explanation"]
+                ):
+                    best_plan_id_cost = all_generated_plans[plan_id][
+                        "estimated_cost_per_row"
+                    ]
                     best_plan_id = plan_id
-    
+
     return best_plan_id
