@@ -1,11 +1,14 @@
 import datetime
 from datetime import date
 from sys import stderr
+from custom_errors import *
 
 
 """ #################################################################### 
 used to generate the combinations of queries for the selected predicates
 #################################################################### """
+
+
 class Generator: 
 
     def generate_plans(self, arr, original_sql): # takes in array of selectivites per predicate, from get_selectivities
@@ -47,8 +50,10 @@ class Generator:
         
             helper(0, original_sql, [])
             return res
+        except CustomError as e:
+            raise CustomError(str(e))               
         except:
-            raise Exception("Error in generate_plans() - unable to generate plans for required selectivity variations")
+            raise CustomError("Error in generate_plans() - unable to generate plans for required selectivity variations")
     
     def generate_ranges(self, lessthan_histogram_bounds, morethan_histogram_bounds): # for selectivities with more than 2 conditions (i.e. range)
         try:
@@ -56,8 +61,10 @@ class Generator:
             # all possible permutations
             res = [(x,y) for x in lessthan_histogram_bounds for y in morethan_histogram_bounds if x[0] > y[0]]
             return res
+        except CustomError as e:
+            raise CustomError(str(e))               
         except:
-            raise Exception("Error in generate_ranges() - unable to generate the required histogram bounds")
+            raise CustomError("Error in generate_ranges() - unable to generate the required histogram bounds")
 
     def find_and_replace(self, predicate, operator, old_val, new_val, sql_query): 
         try:
@@ -67,5 +74,7 @@ class Generator:
                 old_val = "'{}'".format(date.isoformat(old_val))
             new_query = sql_query.replace("{} {} {}".format(predicate, operator, old_val), "{} {} {}".format(predicate, operator, new_val))
             return new_query
+        except CustomError as e:
+            raise CustomError(str(e))               
         except:
-            raise Exception("Error in find_and_replace() - unable to replace the original attribute value with new one")
+            raise CustomError("Error in find_and_replace() - unable to replace the original attribute value with new one")

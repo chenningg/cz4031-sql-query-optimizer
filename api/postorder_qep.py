@@ -1,8 +1,9 @@
 import json
 from sys import stderr
+from custom_errors import *
 
 """ #################################################################### 
-Prints out a query plan 
+gets text explanation of a query plan 
 #################################################################### """
 
 # Output name of intermediate output
@@ -13,7 +14,6 @@ def postorder_qep(plan):
     try:
         plan = json.loads(plan)
         plan = plan["Plan"]
-        # print(json.dumps(plan, indent=2), file=stderr)
 
         postorder_result = []
 
@@ -80,8 +80,6 @@ def postorder_qep(plan):
             else:
                 output += "on " + curr_name + "."
 
-            # print([curr_name, output], file=stderr)
-
             return [curr_name, output]
 
         output = ""
@@ -94,6 +92,7 @@ def postorder_qep(plan):
         postorder_result.append(output)
 
         return postorder_result
-
+    except CustomError as e:
+        raise CustomError(str(e))   
     except:
-        raise Exception("Error in postorder_qep() - unable to find any nodes in query execution plan.")
+        raise CustomError("Error in postorder_qep() - unable to find any nodes in query execution plan.")

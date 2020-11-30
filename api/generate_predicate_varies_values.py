@@ -2,7 +2,7 @@
 from sys import stderr
 from datetime import date
 from database_query_helper import *
-
+from custom_errors import *
 
 
 """ #################################################################### 
@@ -23,8 +23,10 @@ def dict_like_to_list(dict_like, output_type):
             output = output.split(',')
             cleaned_output = [date.fromisoformat(i) for i in output]
         return cleaned_output
+    except CustomError as e:
+        raise CustomError(str(e))           
     except:
-        raise Exception("Error in dict_like_to_list() - unable to convert dictionary-like object to a list")
+        raise CustomError("Error in dict_like_to_list() - unable to convert dictionary-like object to a list")
 
 
 """ #################################################################### 
@@ -37,8 +39,10 @@ def get_attribute_datatype(relation, attribute):
         result = query(sql_string)
         result = result[0]
         return result
+    except CustomError as e:
+        raise CustomError(str(e))           
     except:
-        raise Exception("Error in get_attribute_datatype() - unable to get the datatype of an attribute")
+        raise CustomError("Error in get_attribute_datatype() - unable to get the datatype of an attribute")
 
 """ #################################################################### 
 used to get the histgram for a specific attribute from a table 
@@ -92,7 +96,6 @@ def get_histogram(relation, attribute, conditions):
             result = query(sql_string)
             result = result[0]
 
-            print("datatype: ", attribute_datatype, file=stderr)
             if attribute_datatype == 'numeric':
                 histogram = dict_like_to_list(result, 'float')
             if attribute_datatype == 'integer':
@@ -136,20 +139,16 @@ def get_histogram(relation, attribute, conditions):
             
             if len(lower) != 0:
                 lower_leftbound = max(len(lower) - 2, 0)
-                # print('lower_leftbound, ', lower_leftbound, file=stderr)
                 for i in lower[lower_leftbound:]:
                     selectivities_required.append(i)
 
             if len(higher) != 0:
                 higher_rightbound = min( len(higher), 2)
-                # print('higher_rightbound, ', higher_rightbound, file=stderr)
                 for i in higher[:higher_rightbound]:
                     selectivities_required.append(i)
             
             selectivities_required.sort()
             selectivities_required = list(set(selectivities_required))
-
-            # print('selectivities_required: ', selectivities_required, file=stderr)
 
 
             # get the corresponding values to the selectivity that we want from the histogram
@@ -177,5 +176,7 @@ def get_histogram(relation, attribute, conditions):
             return_values['conditions'][condition] = return_value
 
         return return_values
+    except CustomError as e:
+        raise CustomError(str(e))           
     except:
-        raise Exception("Error in get_histogram() - unable to obtain histogram for the attribute")
+        raise CustomError("Error in get_histogram() - unable to obtain histogram for the attribute")

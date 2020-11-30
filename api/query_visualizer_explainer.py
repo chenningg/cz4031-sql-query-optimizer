@@ -2,10 +2,14 @@ import json
 from sys import stderr
 import networkx as nx
 from networkx.readwrite import json_graph
+from custom_errors import *
+
 
 """ #################################################################### 
 Creates a graph, and a text explanation for a given query execution plan
 #################################################################### """
+
+
 def visualize_explain_query(plan):
     try:
         plan = json.loads(plan)
@@ -97,8 +101,11 @@ def visualize_explain_query(plan):
             return data, explanation
         else:
             return {}
+    except CustomError as e:
+        raise CustomError(str(e))
     except:
-        raise Exception("Error in visualize_query() - unable to get the graph for the query")
+        # raise Exception("Error in visualize_explain_query() - unable to get the graph and explanation for the query")
+        raise CustomError("Error in visualize_explain_query() - unable to get the graph and explanation for the query")
 
 
 """ #################################################################### 
@@ -149,12 +156,19 @@ def craft_explanation_string(explanation, node_type, child_names, curr_name):
             except:
                 explanation += "on " + child_names["Relation Name"] + " as " + curr_name + "."
         return explanation
+    except CustomError as e:
+        raise CustomError(str(e))        
     except:
-        raise Exception("Error in craft_explanation_string() - unable to generate text explanation of graph")
+        raise CustomError("Error in craft_explanation_string() - unable to generate text explanation of graph")
 
 
 """ #################################################################### 
 Generates a unique ID (running character sequence) for nodes as a string
 #################################################################### """
 def string_unique_id(unique_id):
-    return "T" + str(unique_id)
+    try:
+        return "T" + str(unique_id)
+    except CustomError as e:
+        raise CustomError(str(e))
+    except:
+        raise CustomError("Error in string_unique_id() - unable to generate unique id")        
