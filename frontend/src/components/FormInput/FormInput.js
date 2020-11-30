@@ -7,8 +7,12 @@ import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Accordion from 'react-bootstrap/Accordion'
 import Card from 'react-bootstrap/Card'
+import Toast from 'react-bootstrap/Toast'
+import Spinner from 'react-bootstrap/Spinner'
 
 import FormOutput from "../FormOutput/FormOutput";
+
+import styles from "./FormInput.module.css";
 
 const FormInput = () => {
   const [input, setInput] = useState({
@@ -17,14 +21,19 @@ const FormInput = () => {
   });
   const [output, setOutput] = useState({
     "data": {},
+    "bestPlanId": 1,
     "status": "",
     "error": false
   });
 
-  const [showAlert, setAlert] = useState(false);
+  const [showPredicateWarning, setShowPredicateWarning] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    setShowLoading(true);
     setOutput((oldState) => {
       return (
         {...oldState, "status": "Generating output...", "error": false}
@@ -34,50 +43,59 @@ const FormInput = () => {
     if (input.query !== "") {
       axios.post("/generate", input)
         .then((response) => {
+          setShowLoading(false);
           // Handle error gracefully
-          if (response.status === false) {
+          if (response.status === false || response.data["error"] === true) {
             setOutput((oldState) => { 
               return (
-                {...oldState, "status": "Error generating output. Please check your query.", "error": true}
+                {...oldState, "status": response.data["status"], "error": true}
               )
             })
+            setShowError(true);
           }
           else {
             console.log(response.data);
             setOutput((oldState) => { 
               return (
-                {...oldState, "data": response.data["data"], "status": "Succesfully received output. Displaying...", "error": false}
+                {...oldState, "data": response.data["data"], "bestPlanId": response.data["best_plan_id"], "status": response.data["status"], "error": false}
               )
             })
+            setShowSuccess(true);
           }
       })
       .catch((error) => {
+        setShowLoading(false);
         setOutput((oldState) => { 
           return (
-            {...oldState, "status": "Error generating output. Please check your query.", "error": true}
+            {...oldState, "status": "Error generating output. Please check your query's formatting and/or validity.", "error": true}
           )
         })
+        setShowError(true);
       })
     }
     else {
+      setShowLoading(false);
       setOutput((oldState) => { 
         return (
           {...oldState, "status": "Error generating output. Please input an SQL query.", "error": true}
         )
       })
+      setShowError(true);
     }
   }
 
   const limitPredicates = (event) => {
-    let timeout;
-    if (typeof(timeout) !== undefined) {
-      setTimeout(() => { setAlert(false); }, 2000);
-      setAlert(true);
-    }
+    // let timeout;
+    // if (typeof(timeout) !== undefined) {
+    //   setTimeout(() => { setAlert(false); }, 2000);
+    //   setAlert(true);
+    // }
 
     event.target.checked = false;
+    setShowPredicateWarning(true);
   }
 
+  // Handles user's adding of predicates, and limits them if it goes above 4 predicates.
   const handleChecked = (event) => {
     setInput(oldState => {
       const index = oldState.predicates.indexOf(event.target.id);
@@ -109,6 +127,7 @@ const FormInput = () => {
     });
     setOutput({
       "data": {},
+      "best_plan_id": 1,
       "status": "",
       "error": false
     });
@@ -130,9 +149,35 @@ const FormInput = () => {
   return (
     <>
       {
-        showAlert ? <Card className="position-fixed" style={{ zIndex: 100, backgroundColor: "red", color: "white", top: 50 + '%', left: 50 + '%', transform: `translate(-50%, -50%)`}}>
-        <Card.Body>You may only select a maximum of 4 predicates.</Card.Body>
-      </Card> : null
+        <>
+          <div className={styles.toastWrapper}>
+            <Toast bsPrefix={styles.toastError} animation={true} autohide={true} delay={3000} onClose={() => {setShowPredicateWarning(false)}} show={showPredicateWarning}>
+              <Toast.Header bsPrefix={styles.toastHeader}>Too many predicates!</Toast.Header>
+              <Toast.Body bsPrefix={styles.toastBody}>You may not select more than 4 predicates.</Toast.Body>
+            </Toast>
+          </div>
+
+          <div className={styles.toastWrapper}>
+            <Toast bsPrefix={styles.toastLoading} animation={true} autohide={false} delay={3000} onClose={() => {setShowLoading(false)}} show={showLoading}>
+              <Spinner animation="border" size="sm" variant="light" as="span" role="status"></Spinner>
+              <Toast.Header bsPrefix={styles.toastHeader}>Loading data...</Toast.Header>
+            </Toast>
+          </div>
+
+          <div className={styles.toastWrapper}>
+            <Toast bsPrefix={styles.toastSuccess} animation={true} autohide={true} delay={3000} onClose={() => {setShowSuccess(false)}} show={showSuccess}>
+              <Toast.Header bsPrefix={styles.toastHeader}>Success!</Toast.Header>
+              <Toast.Body bsPrefix={styles.toastBody}>Data loaded. Please see the output for the results.</Toast.Body>
+            </Toast>
+          </div>
+
+          <div className={styles.toastWrapper}>
+            <Toast bsPrefix={styles.toastError} animation={true} autohide={true} delay={8000} onClose={() => {setShowError(false)}} show={showError}>
+              <Toast.Header bsPrefix={styles.toastHeader}>Error!</Toast.Header>
+              <Toast.Body bsPrefix={styles.toastBody}>{output.status}</Toast.Body>
+            </Toast>
+          </div>
+        </>
       }
       
       <Form onSubmit={handleSubmit} className="mb-4">
@@ -146,6 +191,7 @@ const FormInput = () => {
         <Form.Row>
           <Form.Group as={Col} controlId="formPredicates">
             <Form.Label>Predicates</Form.Label>
+            <Form.Text>Select up to 4 predicates that are limited by a range condition in a WHERE clause in the query (no equality conditions). For example, <i><b>WHERE attribute_name &gt; 100</b></i></Form.Text>
             <Accordion>
               <Card>
                 <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
@@ -257,6 +303,7 @@ const FormInput = () => {
           <Form.Group as={Col} controlId="formInput">
             <Form.Group controlId="formQuery">
                 <Form.Label>SQL Query</Form.Label>
+                <Form.Text>Please input your SQL query. Ensure that the query is properly formatted. Please leave a space between every operator. For example, <i><b>attribute &gt; 5</b></i> instead of <i><b>attribute&gt;5</b></i></Form.Text>
                 <Form.Control as="textarea" rows="19" placeholder="Input SQL query..." onChange={event => setInput({...input, "query": event.target.value})} value={input.query} />
               <Row>
                 <Col>
