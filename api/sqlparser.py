@@ -1,8 +1,7 @@
 import sqlparse
 import collections 
 from constant.constants import (
-    equality_comparators,
-    range_comparators
+    operators
 )
 from operator import mul, add, sub, truediv
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
@@ -78,7 +77,8 @@ class SQLParser:
 
     def parse_query(self, sql):
         try:
-            cleaned_sql = self.clean_query(sql)
+            formatted_sql = self.sql_formatter(sql)
+            cleaned_sql = self.clean_query(formatted_sql)
             parsed = sqlparse.parse(cleaned_sql)
             stmt = parsed[0]
             from_seen, select_seen, where_seen, groupby_seen, orderby_seen = False, False, False , False, False
@@ -202,19 +202,18 @@ class SQLParser:
         except:
             raise Exception("Error in calculate() - unable to calculate attribute value")
     
-    def check_validity(self, sql):
+    def sql_formatter(self, sql):
+        end = 0 
+        temp = ""
         for index in range(1, len(sql)-1): 
-            if sql[index] in equality_comparators or sql[index] in range_comparators: 
-                if sql[index+1] in equality_comparators or sql[index+1] in range_comparators: # only check lhs
-                    if sql[index-1] != ' ': 
-                        return False 
-                else: 
-                     if sql[index+1] != ' ': 
-                        return False 
-                if sql[index-1] in equality_comparators or sql[index-1] in range_comparators:
-                    if sql[index+1] != ' ': 
-                        return False 
-                else: 
-                    if sql[index-1] != ' ': 
-                        return False 
-        return True
+            if sql[index] in operators: 
+                if sql[index-1] not in operators and ord(sql[index-1]) != 32: 
+                    print(sql[index-1], sql[index], ord(sql[index-1]))
+                    temp += sql[end: index] + ' ' 
+                    end = index
+                if sql[index+1] not in operators and ord(sql[index+1]) != 32: 
+                    temp += sql[end: index+1] + ' '
+                    end = index + 1 
+
+        temp += sql[end: len(sql)]
+        return temp

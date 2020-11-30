@@ -20,3 +20,4 @@ var_prefix_to_table = {
 ''' PSQL '''
 equality_comparators = {"!=", "="}
 range_comparators = {"<=", ">=", ">", "<"}
+operators = {"<", "=", ">", "!"}

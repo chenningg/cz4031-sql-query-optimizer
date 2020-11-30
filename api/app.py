@@ -206,12 +206,9 @@ Calculates the specific selectivities of each predicate in the query.
 
 
 def get_selectivities(sql_string, predicates):
-    sqlparser = SQLParser()
-    if not sqlparser.check_validity(sql_string):
-        raise Exception(
-        "Please leave a space between every operator"
-    )
+
     try:
+        sqlparser = SQLParser()
         sqlparser.parse_query(sql_string)
         predicate_selectivities = []
         for predicate in predicates:
