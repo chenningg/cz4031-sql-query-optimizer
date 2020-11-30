@@ -214,13 +214,7 @@ def get_selectivities(sql_string, predicates):
         for predicate in predicates:
             relation = var_prefix_to_table[predicate.split("_")[0]]
             conditions = sqlparser.comparison[predicate]
-
-            if len(conditions) == 0:
-                return predicate_selectivities
-            elif conditions[0][0] in equality_comparators:
-                # some_returned_json = most_common_value()
-                pass
-            else:
+            if conditions and conditions[0][0] not in equality_comparators: 
                 histogram_data = get_histogram(relation, predicate, conditions)
                 res = {}
                 for k, v in histogram_data["conditions"].items():  # k is like ('<', 5)
@@ -240,7 +234,6 @@ def get_selectivities(sql_string, predicates):
 
                 # histogram_data returns the histogram bounds for a single predicate
                 predicate_selectivities.append(histogram_data)
-
         return predicate_selectivities
 
     except:
