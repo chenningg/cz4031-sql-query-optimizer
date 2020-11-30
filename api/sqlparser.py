@@ -66,7 +66,6 @@ class SQLParser:
                 and_start = self.query_index('and', rest)
                 sql = sql[:between_start] + ">= " + rest[:and_start + 3] + " {} <=".format(predicate_to_add) + rest[and_start + 3:]
             
-            print(sql)
             sql = sql.replace("\t", "").replace("\n", " ")
             return sql
         except:

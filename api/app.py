@@ -90,7 +90,6 @@ def get_plans():
         if len(original_predicate_selectivity_data) != 0:
             
             new_selectivities = get_selectivities(sql_query, request_data["predicates"])
-            print("new selectivities: ", new_selectivities, file=stderr)
 
             # array of (new_queries, predicate_selectivity_data)
             new_plans = Generator().generate_plans(
@@ -122,9 +121,12 @@ def get_plans():
                     "predicate_selectivity_data": predicate_selectivity_combination,
                     "estimated_cost_per_row": calculate_estimated_cost_per_row(qep),
                 }
-        
+
+        # get the best plan out of all the generated plans
+        best_plan_id = get_best_plan_id(all_generated_plans)
+
         # clean out the date objects for json serializability 
-        data = {"data": all_generated_plans}
+        data = {"data": all_generated_plans, "best_plan_id": best_plan_id}
         clean_json(data)
 
         return data
@@ -190,10 +192,7 @@ def get_selectivities(sql_string, predicates):
         predicate_selectivities = []
         for predicate in predicates:
             relation = var_prefix_to_table[predicate.split("_")[0]]
-
             conditions = sqlparser.comparison[predicate]
-
-            print("conditions", conditions, file=stderr)
 
             if len(conditions) == 0:
                 return predicate_selectivities
@@ -221,7 +220,6 @@ def get_selectivities(sql_string, predicates):
                 # histogram_data returns the histogram bounds for a single predicate
                 predicate_selectivities.append(histogram_data)
 
-        print("predicate_selectivities", predicate_selectivities)
         return predicate_selectivities
 
     except:
@@ -251,3 +249,26 @@ def get_selective_qep(sql_string, selectivities, predicates):
                 )
     except:
         raise Exception("Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause")
+
+
+""" #################################################################### 
+get the best plan id in terms of cost, and the plan must be different from original plan
+#################################################################### """
+def get_best_plan_id(all_generated_plans):
+    best_plan_id_cost = all_generated_plans[0]["estimated_cost_per_row"]
+    best_plan_id = 0
+    
+    for plan_id in all_generated_plans:
+        
+        # ignore the original plan
+        if plan_id != 0:
+
+            # if the estimated cost per row is lower, the plan might be better
+            if all_generated_plans[plan_id]["estimated_cost_per_row"] < best_plan_id_cost:
+
+                # if the plan is not the same plan as original plan
+                if all_generated_plans[plan_id]["explanation"] != all_generated_plans[0]["explanation"]:
+                    best_plan_id_cost = all_generated_plans[plan_id]["estimated_cost_per_row"]
+                    best_plan_id = plan_id
+    
+    return best_plan_id
