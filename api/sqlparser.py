@@ -1,5 +1,8 @@
 import sqlparse
 import collections 
+from constant.constants import (
+    operators
+)
 from operator import mul, add, sub, truediv
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
 
@@ -68,12 +71,14 @@ class SQLParser:
             
             sql = sql.replace("\t", "").replace("\n", " ")
             return sql
+
         except:
             raise Exception("Error in clean_query() - unable to clean the sql query")
 
     def parse_query(self, sql):
         try:
-            cleaned_sql = self.clean_query(sql)
+            formatted_sql = self.sql_formatter(sql)
+            cleaned_sql = self.clean_query(formatted_sql)
             parsed = sqlparse.parse(cleaned_sql)
             stmt = parsed[0]
             from_seen, select_seen, where_seen, groupby_seen, orderby_seen = False, False, False , False, False
@@ -143,6 +148,7 @@ class SQLParser:
                 where_seen = False
                 groupby_seen = False
                 orderby_seen = False
+
         except:
             raise Exception("Error in parse_query() - unable to parse the sql query")
 
@@ -195,3 +201,18 @@ class SQLParser:
             return OP[cur_op](float(prev_num), float(cur_num))
         except:
             raise Exception("Error in calculate() - unable to calculate attribute value")
+    
+    def sql_formatter(self, sql):
+        end = 0 
+        temp = ""
+        for index in range(1, len(sql)-1): 
+            if sql[index] in operators: 
+                if sql[index-1] not in operators and ord(sql[index-1]) != 32: 
+                    temp += sql[end: index] + ' ' 
+                    end = index
+                if sql[index+1] not in operators and ord(sql[index+1]) != 32: 
+                    temp += sql[end: index+1] + ' '
+                    end = index + 1 
+
+        temp += sql[end: len(sql)]
+        return temp

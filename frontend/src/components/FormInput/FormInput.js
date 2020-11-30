@@ -85,12 +85,6 @@ const FormInput = () => {
   }
 
   const limitPredicates = (event) => {
-    // let timeout;
-    // if (typeof(timeout) !== undefined) {
-    //   setTimeout(() => { setAlert(false); }, 2000);
-    //   setAlert(true);
-    // }
-
     event.target.checked = false;
     setShowPredicateWarning(true);
   }
@@ -120,6 +114,7 @@ const FormInput = () => {
     });
   }
 
+  // Resets the form's state.
   const resetForm = (event) => {
     setInput({
       "query": "",
@@ -133,6 +128,7 @@ const FormInput = () => {
     });
   }
 
+  // Helper function to display selected predicates to the user.
   const showSelectedPredicates = () => {
     if (input.predicates && input.predicates.length > 0) {
       let selectedPredicates = "";
