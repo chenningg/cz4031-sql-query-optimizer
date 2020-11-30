@@ -208,7 +208,6 @@ class SQLParser:
         for index in range(1, len(sql)-1): 
             if sql[index] in operators: 
                 if sql[index-1] not in operators and ord(sql[index-1]) != 32: 
-                    print(sql[index-1], sql[index], ord(sql[index-1]))
                     temp += sql[end: index] + ' ' 
                     end = index
                 if sql[index+1] not in operators and ord(sql[index+1]) != 32: 
