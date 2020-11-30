@@ -241,7 +241,6 @@ class SQLParser:
                 while not splitted_word_sql[end_index].startswith(')'): 
                     end_index += 1
                 end_part = splitted_word_sql[end_index][1:] if len(splitted_word_sql[end_index]) > 1 else splitted_word_sql[end_index]
-                print(" ".join(splitted_word_sql[:start_index] + [start_part]+ ['100'] + [end_part]+splitted_word_sql[end_index+1:]))
                 return " ".join(splitted_word_sql[:start_index] + [start_part]+ ['100'] + [end_part]+splitted_word_sql[end_index+1:])
         return sql
     
