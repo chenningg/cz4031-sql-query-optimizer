@@ -155,8 +155,11 @@ const FormInput = () => {
 
           <div className={styles.toastWrapper}>
             <Toast bsPrefix={styles.toastLoading} animation={true} autohide={false} delay={3000} onClose={() => {setShowLoading(false)}} show={showLoading}>
-              <Spinner animation="border" size="sm" variant="light" as="span" role="status"></Spinner>
-              <Toast.Header bsPrefix={styles.toastHeader}>Loading data...</Toast.Header>
+              <div className={styles.toastLoadingWrapper}>
+                <Spinner animation="border" size="sm" variant="light" as="span" role="status"></Spinner>
+                <Toast.Header bsPrefix={styles.toastHeader}>Loading data...</Toast.Header>
+              </div>
+              <Toast.Body bsPrefix={styles.toastBody}>Please wait patiently - this could take a while.</Toast.Body>
             </Toast>
           </div>
 
@@ -305,9 +308,8 @@ const FormInput = () => {
             <Form.Group controlId="formQuery">
                 <Form.Label>SQL Query</Form.Label>
                 <Form.Text>
-                  Please input your SQL query. Ensure that the query is properly formatted.
-                  Please leave a space between every operator. For example, <i><b>attribute &gt; 5</b></i> instead of <i><b>attribute&gt;5.</b></i>
-                  You can type your query across mulitple lines using the 'Enter' key.
+                  Please input your SQL query. Ensure that the query is properly formatted and is a valid SQL query.
+                  You can type your query across mulitple lines using the 'Enter' key. We do not support deep nesting of queries at the moment, but one level nesting is fine.
                 </Form.Text>
                 <br />
                 <Form.Control as="textarea" rows="19" placeholder="Input SQL query..." onChange={event => setInput({...input, "query": event.target.value})} value={input.query} />
