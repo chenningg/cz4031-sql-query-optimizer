@@ -11,7 +11,7 @@ Queries are tested against [TPC-H](http://www.tpc.org/tpch/), a benchmark for ge
 First, clone this repository to a local folder on your computer. This repository contains two main folders - the `/api` backend (server), and the `/frontend` (client). To ensure that this project runs correctly, we need to set up both the frontend and the backend, then run them concurrently.
 
 **Ensure that you have [Yarn](https://yarnpkg.com/getting-started) (A package manager for javascript) and [NodeJS](https://nodejs.org/en/) installed.**
-Run `yarn install` in this root folder
+Run `yarn install` in this root folder.
 
 ### Setting up the frontend
 
@@ -82,7 +82,7 @@ DB_PASSWORD=postgres  (Password for your user)
 DB_PORT=5432          (Port that your database runs on)
 ```
 
-We recommend that you use the exact configuration for the PostgreSQL database. 
+We recommend that you use the exact configuration for the PostgreSQL database.
 
 6. We recommend you head back up to the `root` folder and run `yarn start`, which starts both the frontend client and the API server concurrently. However for unit testing, you can run `poetry run flask run` from this folder to start the flask server alone
 
@@ -103,7 +103,7 @@ If you've already completed these two steps, feel free to ignore the setup instr
 ### Setting up PostgreSQL and the TPC-H dataset
 
 1. Ensure that you have [PostgreSQL](https://www.PostgreSQL.org/download/) installed. This project may work on other database management systems, but has only been tested on PostgreSQL.
-2. Run [pgAdmin](https://www.pgadmin.org/), which should come bundled in the PostgreSQL installation. If it's your first time accessing it, it will prompt you to create a root user and password - name this user `postgres` and set the password as `postgres`. Alternatively, supply your own password, but you will have to change the password in the environment variable of the main application if you do.  Create a new database named "TPC-H".
+2. Run [pgAdmin](https://www.pgadmin.org/), which should come bundled in the PostgreSQL installation. If it's your first time accessing it, it will prompt you to create a root user and password - name this user `postgres` and set the password as `postgres`. Alternatively, supply your own password, but you will have to change the password in the environment variable of the main application if you do. Create a new database named "TPC-H".
 3. Clone this repository into a new folder.
 4. Open your terminal and run `psql -U postgres -f dss.ddl TPC-H` from the cloned repository's folder. This command connects you to PostgreSQL as the default user `postgres`, and runs the SQL commands found in dss.ddl on the database `TPC-H`. The commands will initialize empty tables in the database similar to the ones shown in the image at the top.
 5. You may generate your own dummy data using [TPC-H](http://www.tpc.org/tpch/), or use our pre-generated data, found in this [Google drive](https://drive.google.com/drive/folders/1i7FYWI1ePuFFZpMdRO7gwVD2lLw_j03B?usp=sharing). Download `data.zip` and extract it. Each csv file corresponds and contains data of a table in the database.
