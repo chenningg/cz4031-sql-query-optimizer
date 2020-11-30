@@ -4,6 +4,7 @@ from sys import stderr
 from custom_errors import *
 
 from dotenv import load_dotenv
+
 # Load environment variables
 load_dotenv()
 
@@ -29,11 +30,11 @@ def connect():
         return conn, cur
 
     except CustomError as e:
-        raise CustomError(str(e))   
+        raise CustomError(str(e))
     except:
         if conn is not None:
             conn.close()
-        raise CustomError("Error in connect() - database connection error.")
+        raise CustomError("Error in connect() - Database connection error.")
 
 
 """ #################################################################### 
@@ -57,9 +58,11 @@ def query(sql_string, explain=False):
         else:
             return data[0]
     except CustomError as e:
-        raise CustomError(str(e))               
+        raise CustomError(str(e))
     except:
-        raise CustomError("Error in query() - database has problem executing query, check your SQL syntax.")
+        raise CustomError(
+            "Error in query() - Database has a problem executing query, check your SQL syntax."
+        )
 
 
 """ #################################################################### 
@@ -70,11 +73,17 @@ gets the estimated cost of a plan, normalized by rows. If rows returned is zero,
 def calculate_estimated_cost_per_row(qep):
     try:
         try:
-            estimated_cost_per_row = ( qep['Plan']['Startup Cost'] + qep['Plan']['Total Cost'] ) / qep['Plan']['Plan Rows']
+            estimated_cost_per_row = (
+                qep["Plan"]["Startup Cost"] + qep["Plan"]["Total Cost"]
+            ) / qep["Plan"]["Plan Rows"]
         except ZeroDivisionError:
-            estimated_cost_per_row = qep['Plan']['Startup Cost'] + qep['Plan']['Total Cost']
+            estimated_cost_per_row = (
+                qep["Plan"]["Startup Cost"] + qep["Plan"]["Total Cost"]
+            )
         return estimated_cost_per_row
     except CustomError as e:
-        raise CustomError(str(e))           
+        raise CustomError(str(e))
     except:
-        raise CustomError("Error in calculate_estimated_cost_per_row() - unable to calculate estimated costs.")
+        raise CustomError(
+            "Error in calculate_estimated_cost_per_row() - Unable to calculate estimated costs."
+        )

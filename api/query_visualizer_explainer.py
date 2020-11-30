@@ -40,7 +40,7 @@ def visualize_explain_query(plan):
                 cost=root["Startup Cost"] + root["Total Cost"],
                 depth=root["depth"],
             )
-            
+
             while queue:
                 curr = queue.pop(0)
                 visited.append(curr)
@@ -48,7 +48,7 @@ def visualize_explain_query(plan):
 
                 if "Plans" in curr:
                     depth = curr["depth"] + 1
-                    
+
                     for child in curr["Plans"]:
                         if child not in visited:
                             child["id"] = string_unique_id(unique_id)
@@ -68,7 +68,9 @@ def visualize_explain_query(plan):
 
                             graph.add_edge(curr["id"], child["id"])
 
-                    explanation = craft_explanation_string(explanation, curr["Node Type"], children, curr["id"])
+                    explanation = craft_explanation_string(
+                        explanation, curr["Node Type"], children, curr["id"]
+                    )
 
                 # If we reach here, we are at a leaf node, add the table itself to the graph
                 else:
@@ -78,7 +80,7 @@ def visualize_explain_query(plan):
                     # unique_id = chr(ord(unique_id) + 1)
                     # unique_id = get_next_unique_id(unique_id)
                     unique_id += 1
-                    
+
                     graph.add_node(
                         table["id"],
                         node_type=curr["Relation Name"],
@@ -88,11 +90,13 @@ def visualize_explain_query(plan):
 
                     graph.add_edge(curr["id"], table["id"])
 
-                    explanation = craft_explanation_string(explanation, curr["Node Type"], curr, curr["id"])
+                    explanation = craft_explanation_string(
+                        explanation, curr["Node Type"], curr, curr["id"]
+                    )
 
             # Return graph as JSON
             data = json_graph.node_link_data(graph)
-            
+
             # Format the explanation to go from leaf to root. We return a list. The last element is an empty string, so pop it first
             explanation = explanation.split(".")
             explanation.pop(-1)
@@ -104,12 +108,16 @@ def visualize_explain_query(plan):
     except CustomError as e:
         raise CustomError(str(e))
     except:
-        raise CustomError("Error in visualize_explain_query() - unable to get the graph and explanation for the query.")
+        raise CustomError(
+            "Error in visualize_explain_query() - Unable to get the graph and explanation for the query."
+        )
 
 
 """ #################################################################### 
 Crafts the explanation string for the graph
 #################################################################### """
+
+
 def craft_explanation_string(explanation, node_type, child_names, curr_name):
     try:
         explanation += node_type + " "
@@ -122,13 +130,13 @@ def craft_explanation_string(explanation, node_type, child_names, curr_name):
             or node_type == "Gather Merge"
             or node_type == "Merge"
             or node_type == "Aggregate"
-            ):
+        ):
             explanation += child_names[0]["id"] + " as " + curr_name + "."
         elif (
             node_type == "Hash Join"
             or node_type == "Nested Loop"
             or node_type == "Merge Join"
-            ):
+        ):
 
             if node_type == "Nested Loop":
                 explanation += "Join "
@@ -145,29 +153,37 @@ def craft_explanation_string(explanation, node_type, child_names, curr_name):
                     + " (inner) as "
                     + curr_name
                     + "."
-            )
-        
+                )
+
         else:
             # nodes like Materialize
             try:
                 explanation += child_names[0]["id"] + " as " + curr_name + "."
             # Relation nodes
             except:
-                explanation += "on " + child_names["Relation Name"] + " as " + curr_name + "."
+                explanation += (
+                    "on " + child_names["Relation Name"] + " as " + curr_name + "."
+                )
         return explanation
     except CustomError as e:
-        raise CustomError(str(e))        
+        raise CustomError(str(e))
     except:
-        raise CustomError("Error in craft_explanation_string() - unable to generate text explanation of graph.")
+        raise CustomError(
+            "Error in craft_explanation_string() - Unable to generate text explanation of graph."
+        )
 
 
 """ #################################################################### 
 Generates a unique ID (running character sequence) for nodes as a string
 #################################################################### """
+
+
 def string_unique_id(unique_id):
     try:
         return "T" + str(unique_id)
     except CustomError as e:
         raise CustomError(str(e))
     except:
-        raise CustomError("Error in string_unique_id() - unable to generate unique id.")        
+        raise CustomError(
+            "Error in string_unique_id() - Unable to generate unique id for QEP nodes."
+        )
