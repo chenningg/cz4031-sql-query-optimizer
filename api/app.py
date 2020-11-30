@@ -22,7 +22,6 @@ from generate_predicate_varies_values import *
 from sqlparser import *
 from generator import Generator
 from query_visualizer_explainer import *
-from cost_calculation import *
 from custom_errors import *
 
 

@@ -16,7 +16,7 @@ establish connection to database
 def connect():
     """ Connect to the PostgreSQL database server """
     try:
-        # connection details
+        # connection details. either use environemtn variable if set up, or use default values
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST", "localhost"),
             database=os.getenv("DB_NAME", "TPC-H"),
@@ -60,3 +60,21 @@ def query(sql_string, explain=False):
         raise CustomError(str(e))               
     except:
         raise CustomError("Error in query() - database has problem executing query, check your SQL syntax")
+
+
+""" #################################################################### 
+gets the estimated cost of a plan, normalized by rows. If rows returned is zero, just return total cost
+#################################################################### """
+
+
+def calculate_estimated_cost_per_row(qep):
+    try:
+        try:
+            estimated_cost_per_row = ( qep['Plan']['Startup Cost'] + qep['Plan']['Total Cost'] ) / qep['Plan']['Plan Rows']
+        except ZeroDivisionError:
+            estimated_cost_per_row = qep['Plan']['Startup Cost'] + qep['Plan']['Total Cost']
+        return estimated_cost_per_row
+    except CustomError as e:
+        raise CustomError(str(e))           
+    except:
+        raise CustomError("Error in calculate_estimated_cost_per_row() - unable to calculate estimated costs")
