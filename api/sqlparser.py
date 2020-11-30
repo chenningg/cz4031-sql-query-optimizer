@@ -5,6 +5,7 @@ from constant.constants import (
 )
 from operator import mul, add, sub, truediv
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
+from custom_errors import *
 
 class SQLParser: 
     def __init__(self): 
@@ -15,8 +16,10 @@ class SQLParser:
             self.tables = []
             self.orderby_attributes = []
             self.groupby_attributes = []
+        except CustomError as e:
+            raise CustomError(str(e))               
         except:
-            raise Exception("Error in sqlparser init - unable to initialize the class")
+            raise CustomError("Error in sqlparser init - unable to initialize the class")
 
     def clean_query(self, sql):
         try:
@@ -71,9 +74,10 @@ class SQLParser:
             
             sql = sql.replace("\t", "").replace("\n", " ")
             return sql
-
+        except CustomError as e:
+            raise CustomError(str(e))   
         except:
-            raise Exception("Error in clean_query() - unable to clean the sql query")
+            raise CustomError("Error in clean_query() - unable to clean the sql query")
 
     def parse_query(self, sql):
         try:
@@ -148,9 +152,10 @@ class SQLParser:
                 where_seen = False
                 groupby_seen = False
                 orderby_seen = False
-
+        except CustomError as e:
+            raise CustomError(str(e))   
         except:
-            raise Exception("Error in parse_query() - unable to parse the sql query")
+            raise CustomError("Error in parse_query() - unable to parse the sql query")
 
     def query_index(self, inside, whole): 
         try:
@@ -182,8 +187,10 @@ class SQLParser:
                 start += 1
 
             return - 1
+        except CustomError as e:
+            raise CustomError(str(e))               
         except:
-            raise Exception("Error in query_index() - unable to query an index")
+            raise CustomError("Error in query_index() - unable to query an index")
 
     def calculate(self, s):
         try:
@@ -199,20 +206,27 @@ class SQLParser:
                 elif char != " ": 
                     cur_num += char
             return OP[cur_op](float(prev_num), float(cur_num))
+        except CustomError as e:
+            raise CustomError(str(e))               
         except:
-            raise Exception("Error in calculate() - unable to calculate attribute value")
+            raise CustomError("Error in calculate() - unable to calculate attribute value")
     
     def sql_formatter(self, sql):
-        end = 0 
-        temp = ""
-        for index in range(1, len(sql)-1): 
-            if sql[index] in operators: 
-                if sql[index-1] not in operators and ord(sql[index-1]) != 32: 
-                    temp += sql[end: index] + ' ' 
-                    end = index
-                if sql[index+1] not in operators and ord(sql[index+1]) != 32: 
-                    temp += sql[end: index+1] + ' '
-                    end = index + 1 
+        try:
+            end = 0 
+            temp = ""
+            for index in range(1, len(sql)-1): 
+                if sql[index] in operators: 
+                    if sql[index-1] not in operators and ord(sql[index-1]) != 32: 
+                        temp += sql[end: index] + ' ' 
+                        end = index
+                    if sql[index+1] not in operators and ord(sql[index+1]) != 32: 
+                        temp += sql[end: index+1] + ' '
+                        end = index + 1 
 
-        temp += sql[end: len(sql)]
-        return temp
+            temp += sql[end: len(sql)]
+            return temp
+        except CustomError as e:
+            raise CustomError(str(e))
+        except:
+            raise CustomError("Error in sql_formatter() - cannot format the sql statement")

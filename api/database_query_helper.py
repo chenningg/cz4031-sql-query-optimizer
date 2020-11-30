@@ -1,6 +1,7 @@
 import psycopg2
 import os
 from sys import stderr
+from custom_errors import *
 
 from dotenv import load_dotenv
 # Load environment variables
@@ -10,6 +11,8 @@ load_dotenv()
 """ #################################################################### 
 establish connection to database
 #################################################################### """
+
+
 def connect():
     """ Connect to the PostgreSQL database server """
     try:
@@ -25,17 +28,19 @@ def connect():
 
         return conn, cur
 
+    except CustomError as e:
+        raise CustomError(str(e))   
     except:
-        print("Exception occured", file=stderr)
         if conn is not None:
             conn.close()
-            print("Database connection closed.", file=stderr)
-        raise Exception("Error in connect() - database connection error")
+        raise CustomError("Error in connect() - database connection error")
 
 
 """ #################################################################### 
 helper that processes a query and returns the data
 #################################################################### """
+
+
 def query(sql_string, explain=False):
     conn, cur = connect()
 
@@ -46,11 +51,12 @@ def query(sql_string, explain=False):
             data = cur.fetchall()
 
             conn.close()
-            print("Database connection closed.", file=stderr)
 
         if explain:
             return data[0][0][0]
         else:
             return data[0]
+    except CustomError as e:
+        raise CustomError(str(e))               
     except:
-        raise Exception ("Error in query() - database has problem executing query, check your SQL syntax")
+        raise CustomError("Error in query() - database has problem executing query, check your SQL syntax")

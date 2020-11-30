@@ -100,6 +100,7 @@ const FormOutput = (props) => {
         <>
           <p><b>No alternative QEPs to consider</b></p>
           <p>No valid predicates were given to explore the neighbouring selectivity space of the given query. Therefore we are unable to compare the QEP for your specified query with other potential alternatives.</p>
+          <p>Please select a valid predicate to get started</p>
         </>
       )
     }
