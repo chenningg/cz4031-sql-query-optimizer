@@ -206,10 +206,10 @@ Calculates the specific selectivities of each predicate in the query.
 
 
 def get_selectivities(sql_string, predicates):
+
     try:
         sqlparser = SQLParser()
         sqlparser.parse_query(sql_string)
-
         predicate_selectivities = []
         for predicate in predicates:
             relation = var_prefix_to_table[predicate.split("_")[0]]
