@@ -19,7 +19,7 @@ If you've already completed these two steps, feel free to ignore the setup instr
 
 ## Setting up Postgresql and the TPC-H dataset
 
-1. Ensure that you have [Postgresql](https://www.postgresql.org/download/) installed. This project may work on other databases, but has only been tested on Postgresql.
+1. Ensure that you have [Postgresql](https://www.postgresql.org/download/) installed. This project may work on other database management systems, but has only been tested on Postgresql.
 2. Run [pgAdmin](https://www.pgadmin.org/), which should come bundled in the Postgresql installation. If it's your first time accessing it, it will prompt you to create a root user and password - name this user `postgres` and supply your own password. Create a new database named "TPC-H".
 3. Clone this repository into a new folder.
 4. Open your terminal and run `psql -U postgres -f dss.ddl TPC-H` from the cloned repository's folder. This command connects you to Postgresql as the default user `postgres`, and runs the SQL commands found in dss.ddl on the database `TPC-H`. The commands will initialize empty tables in the database similar to the ones shown in the image at the top.
