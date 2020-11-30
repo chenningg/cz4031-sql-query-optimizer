@@ -6,4 +6,4 @@ This package houses the frontend for our query optimizer. It takes in a user sup
 
 1. Ensure that you have [Yarn](https://yarnpkg.com/getting-started) (A package manager for javascript) installed.
 2. `cd` into this folder and run `yarn install` to install the dependencies needed for the client.
-3. In your terminal, run `yarn start` to start both the frontend client and the backend API server concurrently. Make sure to check out the `api` folder if you haven't set up the API server yet.
+3. In your terminal, run `yarn start` to start the frontend client. You can also head back up to the `frontend` folder and run `yarn start`, which starts both the frontend client and the API server concurrently.
