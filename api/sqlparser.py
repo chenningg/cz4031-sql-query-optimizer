@@ -1,5 +1,9 @@
 import sqlparse
 import collections 
+from constant.constants import (
+    equality_comparators,
+    range_comparators
+)
 from operator import mul, add, sub, truediv
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
 
@@ -68,6 +72,7 @@ class SQLParser:
             
             sql = sql.replace("\t", "").replace("\n", " ")
             return sql
+
         except:
             raise Exception("Error in clean_query() - unable to clean the sql query")
 
@@ -143,6 +148,7 @@ class SQLParser:
                 where_seen = False
                 groupby_seen = False
                 orderby_seen = False
+
         except:
             raise Exception("Error in parse_query() - unable to parse the sql query")
 
@@ -195,3 +201,20 @@ class SQLParser:
             return OP[cur_op](float(prev_num), float(cur_num))
         except:
             raise Exception("Error in calculate() - unable to calculate attribute value")
+    
+    def check_validity(self, sql):
+        for index in range(1, len(sql)-1): 
+            if sql[index] in equality_comparators or sql[index] in range_comparators: 
+                if sql[index+1] in equality_comparators or sql[index+1] in range_comparators: # only check lhs
+                    if sql[index-1] != ' ': 
+                        return False 
+                else: 
+                     if sql[index+1] != ' ': 
+                        return False 
+                if sql[index-1] in equality_comparators or sql[index-1] in range_comparators:
+                    if sql[index+1] != ' ': 
+                        return False 
+                else: 
+                    if sql[index-1] != ' ': 
+                        return False 
+        return True
