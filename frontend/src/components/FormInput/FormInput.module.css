@@ -14,11 +14,14 @@
 }
 
 .toastLoading {
-  display: flex;
   padding: 0.5rem 1rem;
   background: var(--primary);
   border-radius: 0.25rem;
   color: white;
+}
+
+.toastLoadingWrapper {
+  display: flex;
 }
 
 .toastLoading .toastHeader button {
