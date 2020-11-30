@@ -19,10 +19,9 @@ from datetime import date
 # our own python scripts
 from database_query_helper import *
 from generate_predicate_varies_values import *
-from postorder_qep import *
 from sqlparser import *
 from generator import Generator
-from query_visualizer import *
+from query_visualizer_explainer import *
 from cost_calculation import *
 
 
@@ -183,8 +182,8 @@ def execute_plan(qep_sql_string):
         qep = query(qep_sql_string, explain=True)
         qep = json.dumps(ast.literal_eval(str(qep)))
 
-        graph = visualize_query(qep)
-        explanation = postorder_qep(qep)
+        graph, explanation = visualize_explain_query(qep)
+        # explanation = postorder_qep(qep)
         qep = json.loads(qep)
         return qep, graph, explanation
     except:
