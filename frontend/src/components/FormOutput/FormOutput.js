@@ -198,7 +198,7 @@ const FormOutput = (props) => {
         </Form.Group>
       </Form.Row>      
       <h3 style={{ textAlign: "center" }}>Query Execution Plans</h3>
-      <p style={{ textAlign: "center" }}>The original QEP, and other QEPs in the neighbouring selectivity space</p>
+      <p style={{ textAlign: "center" }}>The original QEP, and other QEPs in the neighbouring selectivity space.</p>
       <hr />
       <Form.Row>
         <Form.Group as={Col} controlId="formPlanSelector1">
@@ -223,7 +223,7 @@ const FormOutput = (props) => {
         </Form.Group>
       </Form.Row>
       <h3 style={{ textAlign: "center" }}>Graphs</h3>
-      <p style={{ textAlign: "center" }}>Click on a node in the graph for more information</p>
+      <p style={{ textAlign: "center" }}>Click on a node in the graph for more information.</p>
       <hr />
       <Form.Row>
         <Form.Group as={Col} controlId="formGraph1">
@@ -234,7 +234,7 @@ const FormOutput = (props) => {
         </Form.Group>
       </Form.Row>
       <h3 style={{ textAlign: "center" }}>Explanations</h3>
-      <p style={{ textAlign: "center" }}>Text explanation of the QEP, much like Neuron</p>
+      <p style={{ textAlign: "center" }}>Text explanation of the QEP, much like Neuron.</p>
       <hr />
       <Form.Row>
         <Form.Group as={Col} controlId="formExplanation1">

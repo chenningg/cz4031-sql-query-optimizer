@@ -19,7 +19,7 @@ class SQLParser:
         except CustomError as e:
             raise CustomError(str(e))               
         except:
-            raise CustomError("Error in sqlparser init - unable to initialize the class")
+            raise CustomError("Error in sqlparser init - unable to initialize the class.")
 
     def clean_query(self, sql):
         try:
@@ -77,7 +77,7 @@ class SQLParser:
         except CustomError as e:
             raise CustomError(str(e))   
         except:
-            raise CustomError("Error in clean_query() - unable to clean the sql query")
+            raise CustomError("Error in clean_query() - unable to clean the sql query.")
 
     def parse_query(self, sql):
         try:
@@ -155,7 +155,7 @@ class SQLParser:
         except CustomError as e:
             raise CustomError(str(e))   
         except:
-            raise CustomError("Error in parse_query() - unable to parse the sql query")
+            raise CustomError("Error in parse_query() - unable to parse the sql query.")
 
     def query_index(self, inside, whole): 
         try:
@@ -190,7 +190,7 @@ class SQLParser:
         except CustomError as e:
             raise CustomError(str(e))               
         except:
-            raise CustomError("Error in query_index() - unable to query an index")
+            raise CustomError("Error in query_index() - unable to query an index.")
 
     def calculate(self, s):
         try:
@@ -209,7 +209,7 @@ class SQLParser:
         except CustomError as e:
             raise CustomError(str(e))               
         except:
-            raise CustomError("Error in calculate() - unable to calculate attribute value")
+            raise CustomError("Error in calculate() - unable to calculate attribute value.")
     
     def sql_formatter(self, sql):
         try:
@@ -229,4 +229,4 @@ class SQLParser:
         except CustomError as e:
             raise CustomError(str(e))
         except:
-            raise CustomError("Error in sql_formatter() - cannot format the sql statement")
+            raise CustomError("Error in sql_formatter() - cannot format the sql statement.")

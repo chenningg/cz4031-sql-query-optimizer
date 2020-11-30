@@ -26,7 +26,7 @@ def dict_like_to_list(dict_like, output_type):
     except CustomError as e:
         raise CustomError(str(e))           
     except:
-        raise CustomError("Error in dict_like_to_list() - unable to convert dictionary-like object to a list")
+        raise CustomError("Error in dict_like_to_list() - unable to convert dictionary-like object to a list.")
 
 
 """ #################################################################### 
@@ -42,7 +42,7 @@ def get_attribute_datatype(relation, attribute):
     except CustomError as e:
         raise CustomError(str(e))           
     except:
-        raise CustomError("Error in get_attribute_datatype() - unable to get the datatype of an attribute")
+        raise CustomError("Error in get_attribute_datatype() - unable to get the datatype of an attribute.")
 
 """ #################################################################### 
 used to get the histgram for a specific attribute from a table 
@@ -179,4 +179,4 @@ def get_histogram(relation, attribute, conditions):
     except CustomError as e:
         raise CustomError(str(e))           
     except:
-        raise CustomError("Error in get_histogram() - unable to obtain histogram for the attribute")
+        raise CustomError("Error in get_histogram() - unable to obtain histogram for the attribute.")

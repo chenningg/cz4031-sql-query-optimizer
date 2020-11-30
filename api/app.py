@@ -148,7 +148,7 @@ def get_plans():
         return {"status": str(e), "error": True}
     except Exception as e:
         print(str(e), file=stderr)
-        return {"status": "Error in get_plans() - unable to get plans for the query", "error": True}
+        return {"status": "Error in get_plans() - unable to get plans for the query.", "error": True}
 
 
 """ #################################################################### 
@@ -171,7 +171,7 @@ def clean_json(d):
     except CustomError as e:
         raise CustomError(str(e))                   
     except:
-        raise CustomError("Error in clean_json() - Unable to clean json dictionary")
+        raise CustomError("Error in clean_json() - Unable to clean json dictionary.")
 
 
 """ #################################################################### 
@@ -193,7 +193,7 @@ def execute_plan(qep_sql_string):
         raise CustomError(str(e))
     except:
         raise CustomError(
-            "Error in execute_plan() - unable to get QEP, graph, explanation"
+            "Error in execute_plan() - unable to get QEP, graph, explanation."
         )
 
 
@@ -203,7 +203,7 @@ def create_qep_sql(sql_query):
     except CustomError as e:
         raise CustomError(str(e))           
     except:
-        raise CustomError("Error in create_qep_sql() - unable to create sql_query string")
+        raise CustomError("Error in create_qep_sql() - unable to create sql_query string.")
 
 
 """ #################################################################### 
@@ -244,7 +244,7 @@ def get_selectivities(sql_string, predicates):
         raise CustomError(str(e))   
     except:
         raise CustomError(
-            "error in get_selectivities() - unable to get the different selectivities for predicates"
+            "error in get_selectivities() - unable to get the different selectivities for predicates."
         )
 
 
@@ -275,7 +275,7 @@ def get_selective_qep(sql_string, selectivities, predicates):
         raise CustomError(str(e))   
     except:
         raise CustomError(
-            "Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause"
+            "Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause."
         )
 
 
@@ -314,4 +314,4 @@ def get_best_plan_id(all_generated_plans):
     except CustomError as e:
         raise CustomError(str(e))
     except:
-        raise CustomError("Error in get_best_plan_id() - cannot get the lowest cost plan")
+        raise CustomError("Error in get_best_plan_id() - cannot get the lowest cost plan.")
