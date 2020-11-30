@@ -6,9 +6,11 @@ from constant.constants import (
 )
 from operator import mul, add, sub, truediv
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
+from custom_errors import *
 
-class SQLParser: 
-    def __init__(self): 
+
+class SQLParser:
+    def __init__(self):
         try:
             self.comparison = collections.defaultdict(list)
             self.parenthesis = []
@@ -16,8 +18,12 @@ class SQLParser:
             self.tables = []
             self.orderby_attributes = []
             self.groupby_attributes = []
+        except CustomError as e:
+            raise CustomError(str(e))
         except:
-            raise Exception("Error in sqlparser init - unable to initialize the class")
+            raise CustomError(
+                "Error in sqlparser init - Unable to initialize the class."
+            )
 
     def clean_query(self, sql):
         try:
@@ -26,55 +32,68 @@ class SQLParser:
 
             # +
             found = False
-            start, end = 0,0 
-            start = self.query_index('+ interval', sql)
+            start, end = 0, 0
+            start = self.query_index("+ interval", sql)
             if start != -1:
-                found = True 
-            if found: 
-                for i in range(start, len(sql)-1): 
-                    if ord(sql[i]) == 10: 
-                        end = i 
+                found = True
+            if found:
+                for i in range(start, len(sql) - 1):
+                    if ord(sql[i]) == 10:
+                        end = i
                         break
                 sql = sql[:start] + sql[end:]
 
             # between and calculate
-            while self.query_index('between', sql) != -1: 
-                between_start = self.query_index('between', sql)
-                between_end = between_start + len('between')
-                if sql[between_end+1].isnumeric(): # between a number to number
-                    i = between_end+1
+            while self.query_index("between", sql) != -1:
+                between_start = self.query_index("between", sql)
+                between_end = between_start + len("between")
+                if sql[between_end + 1].isnumeric():  # between a number to number
+                    i = between_end + 1
                     calc_end = 0
-                    while sql[i] != "a" and sql[i] != "A": 
-                        calc_end = i-1 
-                        i += 1 
-                    first_expression = sql[between_end+1:calc_end+1]
+                    while sql[i] != "a" and sql[i] != "A":
+                        calc_end = i - 1
+                        i += 1
+                    first_expression = sql[between_end + 1 : calc_end + 1]
 
-                    while not sql[i].isnumeric(): 
+                    while not sql[i].isnumeric():
                         second_calc_start = i
                         i += 1
-                    
-                    while ord(sql[i]) != 10: 
+
+                    while ord(sql[i]) != 10:
                         second_calc_end = i
                         i += 1
 
-                    second_expression = sql[second_calc_start+1:second_calc_end+1]
-                    sql = sql[:between_end+1] + "{}".format(self.calculate(first_expression)) + sql[calc_end+1:second_calc_start+1] + "{}".format(self.calculate(second_expression)) + sql[second_calc_end+1:] 
+                    second_expression = sql[second_calc_start + 1 : second_calc_end + 1]
+                    sql = (
+                        sql[: between_end + 1]
+                        + "{}".format(self.calculate(first_expression))
+                        + sql[calc_end + 1 : second_calc_start + 1]
+                        + "{}".format(self.calculate(second_expression))
+                        + sql[second_calc_end + 1 :]
+                    )
 
                 start = 0
-                for i in range(between_start-2, -1, -1): 
-                    if ord(sql[i]) == 32: 
-                        start = i+1
+                for i in range(between_start - 2, -1, -1):
+                    if ord(sql[i]) == 32:
+                        start = i + 1
                         break
-                predicate_to_add = sql[start:between_start-1]
-                rest = sql[between_end+1:]
-                and_start = self.query_index('and', rest)
-                sql = sql[:between_start] + ">= " + rest[:and_start + 3] + " {} <=".format(predicate_to_add) + rest[and_start + 3:]
-            
+                predicate_to_add = sql[start : between_start - 1]
+                rest = sql[between_end + 1 :]
+                and_start = self.query_index("and", rest)
+                sql = (
+                    sql[:between_start]
+                    + ">= "
+                    + rest[: and_start + 3]
+                    + " {} <=".format(predicate_to_add)
+                    + rest[and_start + 3 :]
+                )
+
             sql = sql.replace("\t", "").replace("\n", " ")
             return sql
-
+        except CustomError as e:
+            raise CustomError(str(e))
         except:
-            raise Exception("Error in clean_query() - unable to clean the sql query")
+            raise CustomError("Error in clean_query() - Unable to clean the SQL query.")
 
     def parse_query(self, sql):
         try:
@@ -84,7 +103,13 @@ class SQLParser:
             cleaned_sql = self.clean_query(formatted_sql)
             parsed = sqlparse.parse(cleaned_sql)
             stmt = parsed[0]
-            from_seen, select_seen, where_seen, groupby_seen, orderby_seen = False, False, False , False, False
+            from_seen, select_seen, where_seen, groupby_seen, orderby_seen = (
+                False,
+                False,
+                False,
+                False,
+                False,
+            )
 
             for token in stmt.tokens:
                 if select_seen:
@@ -119,21 +144,33 @@ class SQLParser:
                     groupby_seen = False
                     orderby_seen = False
                     for where_tokens in token:
-                        if isinstance(where_tokens, sqlparse.sql.Comparison):  
+                        if isinstance(where_tokens, sqlparse.sql.Comparison):
                             comparison_string = "{}\n".format(where_tokens)
-                            comparison_key, comparison_operator, comparison_value = comparison_string.strip().split(' ')
-                            self.comparison[comparison_key].append((comparison_operator, comparison_value))
+                            (
+                                comparison_key,
+                                comparison_operator,
+                                comparison_value,
+                            ) = comparison_string.strip().split(" ")
+                            self.comparison[comparison_key].append(
+                                (comparison_operator, comparison_value)
+                            )
                         elif isinstance(where_tokens, sqlparse.sql.Parenthesis):
                             parenthesis_string = "{}\n".format(where_tokens)
                             self.parenthesis.append(parenthesis_string)
 
-            if token.ttype is sqlparse.tokens.Keyword and token.value.upper() == GROUP_BY:
+            if (
+                token.ttype is sqlparse.tokens.Keyword
+                and token.value.upper() == GROUP_BY
+            ):
                 select_seen = False
                 from_seen = False
                 where_seen = False
                 groupby_seen = True
                 orderby_seen = False
-            if token.ttype is sqlparse.tokens.Keyword and token.value.upper() == ORDER_BY:
+            if (
+                token.ttype is sqlparse.tokens.Keyword
+                and token.value.upper() == ORDER_BY
+            ):
                 select_seen = False
                 from_seen = False
                 where_seen = False
@@ -151,11 +188,12 @@ class SQLParser:
                 where_seen = False
                 groupby_seen = False
                 orderby_seen = False
-
+        except CustomError as e:
+            raise CustomError(str(e))
         except:
-            raise Exception("Error in parse_query() - unable to parse the sql query")
+            raise CustomError("Error in parse_query() - Unable to parse the SQL query.")
 
-    def query_index(self, inside, whole): 
+    def query_index(self, inside, whole):
         try:
             window = len(inside)
             n = len(whole)
@@ -164,61 +202,78 @@ class SQLParser:
                 return -1
 
             base = 26
-            MOD = 10**9 + 7
-            
-            charToInt = lambda ch: ord(ch) - ord('a')
+            MOD = 10 ** 9 + 7
+
+            charToInt = lambda ch: ord(ch) - ord("a")
 
             hash1, hash2 = 0, 0
-            for i in range(window): 
-                hash1 = (hash1*base + charToInt(whole[i])) % MOD 
-                hash2 = (hash2*base + charToInt(inside[i])) % MOD
+            for i in range(window):
+                hash1 = (hash1 * base + charToInt(whole[i])) % MOD
+                hash2 = (hash2 * base + charToInt(inside[i])) % MOD
 
-            if hash1 == hash2: 
+            if hash1 == hash2:
                 return 0
 
             start = 1
-            
+
             while start < n - window + 1:
-                hash1 = (hash1*base - charToInt(whole[start-1]) * (base**(window)) % MOD + charToInt(whole[start+window-1])) % MOD
+                hash1 = (
+                    hash1 * base
+                    - charToInt(whole[start - 1]) * (base ** (window)) % MOD
+                    + charToInt(whole[start + window - 1])
+                ) % MOD
                 if hash1 == hash2:
                     return start
                 start += 1
 
-            return - 1
+            return -1
+        except CustomError as e:
+            raise CustomError(str(e))
         except:
-            raise Exception("Error in query_index() - unable to query an index")
+            raise CustomError("Error in query_index() - Unable to query an index.")
 
     def calculate(self, s):
         try:
-            OP = {'*':mul,'+':add,'-':sub , '/': truediv}
-            op_set = {'+','*','-', '/'}
+            OP = {"*": mul, "+": add, "-": sub, "/": truediv}
+            op_set = {"+", "*", "-", "/"}
             cur_op = "+"
             cur_num, prev_num = "", ""
-            for char in s:          
+            for char in s:
                 if char in op_set:
-                    cur_op = char 
+                    cur_op = char
                     prev_num = cur_num
                     cur_num = ""
-                elif char != " ": 
+                elif char != " ":
                     cur_num += char
             return OP[cur_op](float(prev_num), float(cur_num))
+        except CustomError as e:
+            raise CustomError(str(e))
         except:
-            raise Exception("Error in calculate() - unable to calculate attribute value")
-    
-    def sql_formatter(self, sql):
-        end = 0 
-        temp = ""
-        for index in range(1, len(sql)-1): 
-            if sql[index] in operators: 
-                if sql[index-1] not in operators and ord(sql[index-1]) != 32: 
-                    temp += sql[end: index] + ' ' 
-                    end = index
-                if sql[index+1] not in operators and ord(sql[index+1]) != 32: 
-                    temp += sql[end: index+1] + ' '
-                    end = index + 1 
+            raise CustomError(
+                "Error in calculate() - Unable to calculate attribute value."
+            )
 
-        temp += sql[end: len(sql)]
-        return temp
+    def sql_formatter(self, sql):
+        try:
+          end = 0 
+          temp = ""
+          for index in range(1, len(sql)-1): 
+              if sql[index] in operators: 
+                  if sql[index-1] not in operators and ord(sql[index-1]) != 32: 
+                      temp += sql[end: index] + ' ' 
+                      end = index
+                  if sql[index+1] not in operators and ord(sql[index+1]) != 32: 
+                      temp += sql[end: index+1] + ' '
+                      end = index + 1 
+
+          temp += sql[end: len(sql)]
+          return temp
+        except CustomError as e:
+            raise CustomError(str(e))
+        except:
+            raise CustomError(
+                "Error in sql_formatter() - Unable to format the SQL statement."
+            )
 
     def nested_query(self, sql): 
         select_index = []

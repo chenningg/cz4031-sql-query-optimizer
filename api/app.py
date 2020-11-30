@@ -19,11 +19,10 @@ from datetime import date
 # our own python scripts
 from database_query_helper import *
 from generate_predicate_varies_values import *
-from postorder_qep import *
 from sqlparser import *
 from generator import Generator
-from query_visualizer import *
-from cost_calculation import *
+from query_visualizer_explainer import *
+from custom_errors import *
 
 
 # Load environment variables
@@ -145,10 +144,14 @@ def get_plans():
         clean_json(data)
 
         return data
-
+    except CustomError as e:
+        return {"status": str(e), "error": True}
     except Exception as e:
         print(str(e), file=stderr)
-        return {"status": str(e), "error": True}
+        return {
+            "status": "Error in get_plans() - Unable to get plans for the query.",
+            "error": True,
+        }
 
 
 """ #################################################################### 
@@ -168,8 +171,10 @@ def clean_json(d):
             # change date types to string
             if type(d) == date:
                 d = d.strftime("%Y-%m-%d")
+    except CustomError as e:
+        raise CustomError(str(e))
     except:
-        raise Exception("Error in clean_json() - Unable to clean json dictionary")
+        raise CustomError("Error in clean_json() - Unable to clean JSON dictionary.")
 
 
 """ #################################################################### 
@@ -183,21 +188,27 @@ def execute_plan(qep_sql_string):
         qep = query(qep_sql_string, explain=True)
         qep = json.dumps(ast.literal_eval(str(qep)))
 
-        graph = visualize_query(qep)
-        explanation = postorder_qep(qep)
+        graph, explanation = visualize_explain_query(qep)
+        # explanation = postorder_qep(qep)
         qep = json.loads(qep)
         return qep, graph, explanation
+    except CustomError as e:
+        raise CustomError(str(e))
     except:
-        raise Exception(
-            "Error in execute_plan() - unable to get QEP, graph, explanation"
+        raise CustomError(
+            "Error in execute_plan() - Unable to get QEP, graph, explanation."
         )
 
 
 def create_qep_sql(sql_query):
     try:
         return "EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql_query
+    except CustomError as e:
+        raise CustomError(str(e))
     except:
-        raise Exception("Error in create_qep_sql() - unable to create sql_query string")
+        raise CustomError(
+            "Error in create_qep_sql() - Unable to create sql_query string."
+        )
 
 
 """ #################################################################### 
@@ -206,7 +217,6 @@ Calculates the specific selectivities of each predicate in the query.
 
 
 def get_selectivities(sql_string, predicates):
-
     try:
         sqlparser = SQLParser()
         sqlparser.parse_query(sql_string)
@@ -214,7 +224,7 @@ def get_selectivities(sql_string, predicates):
         for predicate in predicates:
             relation = var_prefix_to_table[predicate.split("_")[0]]
             conditions = sqlparser.comparison[predicate]
-            if conditions and conditions[0][0] not in equality_comparators: 
+            if conditions and conditions[0][0] not in equality_comparators:
                 histogram_data = get_histogram(relation, predicate, conditions)
                 res = {}
                 for k, v in histogram_data["conditions"].items():  # k is like ('<', 5)
@@ -235,10 +245,11 @@ def get_selectivities(sql_string, predicates):
                 # histogram_data returns the histogram bounds for a single predicate
                 predicate_selectivities.append(histogram_data)
         return predicate_selectivities
-
+    except CustomError as e:
+        raise CustomError(str(e))
     except:
-        raise Exception(
-            "error in get_selectivities() - unable to get the different selectivities for predicates"
+        raise CustomError(
+            "Error in get_selectivities() - Unable to get the different selectivities for predicates."
         )
 
 
@@ -265,9 +276,11 @@ def get_selective_qep(sql_string, selectivities, predicates):
                     + " {} < {} and ".format(predicate, selectivity)
                     + sql_string[where_index:]
                 )
+    except CustomError as e:
+        raise CustomError(str(e))
     except:
-        raise Exception(
-            "Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause"
+        raise CustomError(
+            "Error in get_selective_qep() - Unable to parse the sql_string for 'WHERE' clause."
         )
 
 
@@ -277,28 +290,35 @@ get the best plan id in terms of cost, and the plan must be different from origi
 
 
 def get_best_plan_id(all_generated_plans):
-    best_plan_id_cost = all_generated_plans[0]["estimated_cost_per_row"]
-    best_plan_id = 0
+    try:
+        best_plan_id_cost = all_generated_plans[0]["estimated_cost_per_row"]
+        best_plan_id = 0
 
-    for plan_id in all_generated_plans:
+        for plan_id in all_generated_plans:
 
-        # ignore the original plan
-        if plan_id != 0:
+            # ignore the original plan
+            if plan_id != 0:
 
-            # if the estimated cost per row is lower, the plan might be better
-            if (
-                all_generated_plans[plan_id]["estimated_cost_per_row"]
-                < best_plan_id_cost
-            ):
-
-                # if the plan is not the same plan as original plan
+                # if the estimated cost per row is lower, the plan might be better
                 if (
-                    all_generated_plans[plan_id]["explanation"]
-                    != all_generated_plans[0]["explanation"]
+                    all_generated_plans[plan_id]["estimated_cost_per_row"]
+                    < best_plan_id_cost
                 ):
-                    best_plan_id_cost = all_generated_plans[plan_id][
-                        "estimated_cost_per_row"
-                    ]
-                    best_plan_id = plan_id
 
-    return best_plan_id
+                    # if the plan is not the same plan as original plan
+                    if (
+                        all_generated_plans[plan_id]["explanation"]
+                        != all_generated_plans[0]["explanation"]
+                    ):
+                        best_plan_id_cost = all_generated_plans[plan_id][
+                            "estimated_cost_per_row"
+                        ]
+                        best_plan_id = plan_id
+
+        return best_plan_id
+    except CustomError as e:
+        raise CustomError(str(e))
+    except:
+        raise CustomError(
+            "Error in get_best_plan_id() - Unable to get the lowest cost plan."
+        )

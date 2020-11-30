@@ -85,12 +85,6 @@ const FormInput = () => {
   }
 
   const limitPredicates = (event) => {
-    // let timeout;
-    // if (typeof(timeout) !== undefined) {
-    //   setTimeout(() => { setAlert(false); }, 2000);
-    //   setAlert(true);
-    // }
-
     event.target.checked = false;
     setShowPredicateWarning(true);
   }
@@ -120,6 +114,7 @@ const FormInput = () => {
     });
   }
 
+  // Resets the form's state.
   const resetForm = (event) => {
     setInput({
       "query": "",
@@ -133,6 +128,7 @@ const FormInput = () => {
     });
   }
 
+  // Helper function to display selected predicates to the user.
   const showSelectedPredicates = () => {
     if (input.predicates && input.predicates.length > 0) {
       let selectedPredicates = "";
@@ -191,7 +187,12 @@ const FormInput = () => {
         <Form.Row>
           <Form.Group as={Col} controlId="formPredicates">
             <Form.Label>Predicates</Form.Label>
-            <Form.Text>Select up to 4 predicates that are limited by a range condition in a WHERE clause in the query (no equality conditions). For example, <i><b>WHERE attribute_name &gt; 100</b></i></Form.Text>
+            <Form.Text>
+              Select up to 4 predicates that are limited by a range condition in a WHERE clause in the query
+              (no equality conditions). For example, with a condition like 
+              <i><b> WHERE l_extendedprice &gt; 100</b></i>, select <i><b>l_extendedprice</b></i> as the predicate.
+              </Form.Text>
+            <br />
             <Accordion>
               <Card>
                 <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
@@ -303,7 +304,12 @@ const FormInput = () => {
           <Form.Group as={Col} controlId="formInput">
             <Form.Group controlId="formQuery">
                 <Form.Label>SQL Query</Form.Label>
-                <Form.Text>Please input your SQL query. Ensure that the query is properly formatted. Please leave a space between every operator. For example, <i><b>attribute &gt; 5</b></i> instead of <i><b>attribute&gt;5</b></i></Form.Text>
+                <Form.Text>
+                  Please input your SQL query. Ensure that the query is properly formatted.
+                  Please leave a space between every operator. For example, <i><b>attribute &gt; 5</b></i> instead of <i><b>attribute&gt;5.</b></i>
+                  You can type your query across mulitple lines using the 'Enter' key.
+                </Form.Text>
+                <br />
                 <Form.Control as="textarea" rows="19" placeholder="Input SQL query..." onChange={event => setInput({...input, "query": event.target.value})} value={input.query} />
               <Row>
                 <Col>

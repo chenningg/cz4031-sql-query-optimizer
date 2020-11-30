@@ -29,8 +29,103 @@
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
   padding: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .outputMessageWrapper p:last-child {
+  margin-bottom: 0;
+}
+
+.showInformationToggleWrapper {
+  text-align: center;
+}
+
+.showInformationToggle {
+  color: var(--primary);
+}
+
+.showInformationToggle:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.informationWrapper {
+  position: fixed;
+  display: block;
+  top: 0;
+  right: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 998;
+}
+
+.noScroll {
+  overflow: hidden;
+}
+
+.toastExplain {
+  background-color: var(--light-gray);
+  color: black;
+  position: fixed;
+  z-index: 999;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--light);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  height: 90%;
+  width: 80%;
+  overflow: auto;
+}
+
+.toastHeader {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.toastHeader button {
+  color: white;
+  opacity: 1;
+  padding: 0;
+  margin-top: -2px !important;
+  text-shadow: none;
+}
+
+.toastHeader button:active {
+  outline: none;
+  border: none;
+}
+
+.toastHeader span {
+  color: black;
+  opacity: 1;
+  margin: 0;
+  padding: 0;
+  margin-top: -2px !important;
+}
+
+.toastHeader span:active {
+  outline: none;
+  border: none;
+}
+
+.toastHeader button:hover {
+  color: black;
+  opacity: 1;
+}
+
+.toastHeader span:hover {
+  color: black;
+  opacity: 1;
+}
+
+.toastBody {
   margin-bottom: 0;
 }
