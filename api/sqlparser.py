@@ -1,7 +1,8 @@
 import sqlparse
 import collections 
 from constant.constants import (
-    operators
+    operators,
+    range_comparators
 )
 from operator import mul, add, sub, truediv
 from constant.constants import FROM, SELECT, GROUP_BY, ORDER_BY
@@ -77,7 +78,9 @@ class SQLParser:
 
     def parse_query(self, sql):
         try:
-            formatted_sql = self.sql_formatter(sql)
+            nested_sql_ = self.nested_query(sql)
+            nested_sql = self.remove_double_spacing(nested_sql_)
+            formatted_sql = self.sql_formatter(nested_sql)
             cleaned_sql = self.clean_query(formatted_sql)
             parsed = sqlparse.parse(cleaned_sql)
             stmt = parsed[0]
@@ -216,3 +219,31 @@ class SQLParser:
 
         temp += sql[end: len(sql)]
         return temp
+
+    def nested_query(self, sql): 
+        select_index = []
+        splitted_word_sql = sql.split(" ")
+        
+        for i, word in enumerate(splitted_word_sql): 
+            if word == 'select\n' or word =='SELECT\n':
+                select_index.append(i)
+        if len(select_index) == 2: 
+            start_index = int(select_index[1])
+            end_index = int(select_index[1])
+            while not splitted_word_sql[start_index].startswith('('):
+                start_index -= 1  
+            flag = False
+            for i in range(start_index, start_index-3, -1): 
+                if splitted_word_sql[i] in range_comparators:
+                    flag = True
+            if flag:
+                start_part = splitted_word_sql[start_index][2:] if len(splitted_word_sql[start_index]) > 1 else splitted_word_sql[start_index]
+                while not splitted_word_sql[end_index].startswith(')'): 
+                    end_index += 1
+                end_part = splitted_word_sql[end_index][1:] if len(splitted_word_sql[end_index]) > 1 else splitted_word_sql[end_index]
+                print(" ".join(splitted_word_sql[:start_index] + [start_part]+ ['100'] + [end_part]+splitted_word_sql[end_index+1:]))
+                return " ".join(splitted_word_sql[:start_index] + [start_part]+ ['100'] + [end_part]+splitted_word_sql[end_index+1:])
+        return sql
+    
+    def remove_double_spacing(self, sql): 
+        return sql.replace('  ', '')
