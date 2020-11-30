@@ -4,6 +4,7 @@ from sys import stderr
 from custom_errors import *
 
 from dotenv import load_dotenv
+
 # Load environment variables
 load_dotenv()
 
@@ -29,11 +30,13 @@ def connect():
         return conn, cur
 
     except CustomError as e:
-        raise CustomError(str(e))   
+        raise CustomError(str(e))
     except:
         if conn is not None:
             conn.close()
-        raise CustomError("Error in connect() - database connection error")
+        raise CustomError(
+            "Error in connect() - Database connection error, check your .env variables."
+        )
 
 
 """ #################################################################### 
@@ -57,6 +60,8 @@ def query(sql_string, explain=False):
         else:
             return data[0]
     except CustomError as e:
-        raise CustomError(str(e))               
+        raise CustomError(str(e))
     except:
-        raise CustomError("Error in query() - database has problem executing query, check your SQL syntax")
+        raise CustomError(
+            "Error in query() - Database has problem executing query, check your SQL syntax."
+        )

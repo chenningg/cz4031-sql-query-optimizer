@@ -108,7 +108,7 @@ const FormOutput = (props) => {
         <>
           <p><b>No alternative QEPs to consider</b></p>
           <p>No valid predicates were given to explore the neighbouring selectivity space of the given query. Therefore we are unable to compare the QEP for your specified query with other potential alternatives.</p>
-          <p>Please select a valid predicate to get started</p>
+          <p>Please select a valid predicate to get started.</p>
         </>
       )
     }
@@ -180,13 +180,13 @@ const FormOutput = (props) => {
         </div>
       </div> : ""}
 
-      <h1 className={styles.outputHeader}>Compare Plans</h1>
+      <h1 className={`${styles.outputHeader}`}>Compare Plans</h1>
       <p>Select two query execution plans to compare. We compare based on the cost per row - the total estimated cost of the query plan divided by the number of rows returned. We recognize that as the selectivity varies, the cost naturally varies. Therefore our metric allows us to normalize and compare across various selectivities somewhat fairly in a heuristic manner. The lower this value is, the better.</p>
       <p>In the comparison, we also show each plan's predicate attributes, as well as the value that they have been varied to and the corresponding selectivity.</p>
       <p>We also provide a graph of the query plan's execution, and a natural langauge explanation. Click on the nodes in the graph for more information about each node.</p>
       <hr />
       <br />
-      <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>Was the original plan the best plan?</h3>
+      <h3 className={`${styles.subHeading} ${styles.heading}`}>Was the original plan the best plan?</h3>
       <Form.Row className={styles.outputMessageRow}>
         <Form.Group as={Col} controlId="formOutputMessage">
           <div className={styles.outputMessageWrapper}>
@@ -197,8 +197,8 @@ const FormOutput = (props) => {
           </div>
         </Form.Group>
       </Form.Row>      
-      <h3 style={{ textAlign: "center" }}>Query Execution Plans</h3>
-      <p style={{ textAlign: "center" }}>The original QEP, and other QEPs in the neighbouring selectivity space</p>
+      <h3 className={styles.heading}>Query Execution Plans</h3>
+      <p className={styles.heading}>Compare the original QEP to other QEPs in the neighbouring selectivity space.</p>
       <hr />
       <Form.Row>
         <Form.Group as={Col} controlId="formPlanSelector1">
@@ -222,8 +222,8 @@ const FormOutput = (props) => {
           <PlanComparison output={props.output} planId={planSelected[1]}/>
         </Form.Group>
       </Form.Row>
-      <h3 style={{ textAlign: "center" }}>Graphs</h3>
-      <p style={{ textAlign: "center" }}>Click on a node in the graph for more information</p>
+      <h3 className={styles.heading}>Graphs</h3>
+      <p className={styles.heading}>Click on a node in the graph for more information.</p>
       <hr />
       <Form.Row>
         <Form.Group as={Col} controlId="formGraph1">
@@ -233,8 +233,8 @@ const FormOutput = (props) => {
           <QueryVisualizer output={props.output} planId={planSelected[1]}/>
         </Form.Group>
       </Form.Row>
-      <h3 style={{ textAlign: "center" }}>Explanations</h3>
-      <p style={{ textAlign: "center" }}>Text explanation of the QEP, much like Neuron</p>
+      <h3 className={styles.heading}>Explanations</h3>
+      <p className={styles.heading}>Text explanation of the QEP, much like Neuron.</p>
       <hr />
       <Form.Row>
         <Form.Group as={Col} controlId="formExplanation1">

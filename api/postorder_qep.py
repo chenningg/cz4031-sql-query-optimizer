@@ -93,6 +93,8 @@ def postorder_qep(plan):
 
         return postorder_result
     except CustomError as e:
-        raise CustomError(str(e))   
+        raise CustomError(str(e))
     except:
-        raise CustomError("Error in postorder_qep() - unable to find any nodes in query execution plan.")
+        raise CustomError(
+            "Error in postorder_qep() - Unable to find any nodes in query execution plan."
+        )

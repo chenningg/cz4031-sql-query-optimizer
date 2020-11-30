@@ -149,7 +149,10 @@ def get_plans():
         return {"status": str(e), "error": True}
     except Exception as e:
         print(str(e), file=stderr)
-        return {"status": "Error in get_plans() - unable to get plans for the query", "error": True}
+        return {
+            "status": "Error in get_plans() - Unable to get plans for the query.",
+            "error": True,
+        }
 
 
 """ #################################################################### 
@@ -170,9 +173,9 @@ def clean_json(d):
             if type(d) == date:
                 d = d.strftime("%Y-%m-%d")
     except CustomError as e:
-        raise CustomError(str(e))                   
+        raise CustomError(str(e))
     except:
-        raise CustomError("Error in clean_json() - Unable to clean json dictionary")
+        raise CustomError("Error in clean_json() - Unable to clean json dictionary.")
 
 
 """ #################################################################### 
@@ -194,7 +197,7 @@ def execute_plan(qep_sql_string):
         raise CustomError(str(e))
     except:
         raise CustomError(
-            "Error in execute_plan() - unable to get QEP, graph, explanation"
+            "Error in execute_plan() - Unable to get QEP, graph and explanation."
         )
 
 
@@ -202,9 +205,11 @@ def create_qep_sql(sql_query):
     try:
         return "EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql_query
     except CustomError as e:
-        raise CustomError(str(e))           
+        raise CustomError(str(e))
     except:
-        raise CustomError("Error in create_qep_sql() - unable to create sql_query string")
+        raise CustomError(
+            "Error in create_qep_sql() - Unable to create sql_query string."
+        )
 
 
 """ #################################################################### 
@@ -220,7 +225,7 @@ def get_selectivities(sql_string, predicates):
         for predicate in predicates:
             relation = var_prefix_to_table[predicate.split("_")[0]]
             conditions = sqlparser.comparison[predicate]
-            if conditions and conditions[0][0] not in equality_comparators: 
+            if conditions and conditions[0][0] not in equality_comparators:
                 histogram_data = get_histogram(relation, predicate, conditions)
                 res = {}
                 for k, v in histogram_data["conditions"].items():  # k is like ('<', 5)
@@ -242,10 +247,10 @@ def get_selectivities(sql_string, predicates):
                 predicate_selectivities.append(histogram_data)
         return predicate_selectivities
     except CustomError as e:
-        raise CustomError(str(e))   
+        raise CustomError(str(e))
     except:
         raise CustomError(
-            "error in get_selectivities() - unable to get the different selectivities for predicates"
+            "Error in get_selectivities() - Unable to get the different selectivities for predicates."
         )
 
 
@@ -273,10 +278,10 @@ def get_selective_qep(sql_string, selectivities, predicates):
                     + sql_string[where_index:]
                 )
     except CustomError as e:
-        raise CustomError(str(e))   
+        raise CustomError(str(e))
     except:
         raise CustomError(
-            "Error in get_selective_qep() - unable to parse the sql_string for 'WHERE' clause"
+            "Error in get_selective_qep() - Unable to parse the sql_string for 'WHERE' clause."
         )
 
 
@@ -315,4 +320,6 @@ def get_best_plan_id(all_generated_plans):
     except CustomError as e:
         raise CustomError(str(e))
     except:
-        raise CustomError("Error in get_best_plan_id() - cannot get the lowest cost plan")
+        raise CustomError(
+            "Error in get_best_plan_id() - Unable to get the lowest cost plan."
+        )
