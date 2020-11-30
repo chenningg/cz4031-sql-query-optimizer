@@ -140,12 +140,14 @@ def craft_explanation_string(explanation, node_type, child_names, curr_name):
                     + curr_name
                     + "."
             )
-        elif (
-            node_type == "Materialize"
-        ):
-            explanation += child_names[0]["id"] + " as " + curr_name + "."
+        
         else:
-            explanation += "on " + child_names["Relation Name"] + " as " + curr_name + "."
+            # nodes like Materialize
+            try:
+                explanation += child_names[0]["id"] + " as " + curr_name + "."
+            # Relation nodes
+            except:
+                explanation += "on " + child_names["Relation Name"] + " as " + curr_name + "."
         return explanation
     except:
         raise Exception("Error in craft_explanation_string() - unable to generate text explanation of graph")
