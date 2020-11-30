@@ -1,0 +1,82 @@
+.toastWrapper {
+  position: fixed;
+  z-index: 999;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.toastError {
+  padding: 0.5rem 1rem;
+  background: var(--danger);
+  color: white;
+  border-radius: 0.25rem;
+}
+
+.toastLoading {
+  display: flex;
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  border-radius: 0.25rem;
+  color: white;
+}
+
+.toastLoading .toastHeader button {
+  display: none;
+}
+
+.toastLoading span {
+  margin-right: 0.5rem;
+  margin-top: 4px;
+}
+
+.spinner {
+  margin-right: 0.5rem;
+  width: 10px;
+  height: 10px;
+}
+
+.toastSuccess {
+  padding: 0.5rem 1rem;
+  background: var(--success);
+  border-radius: 0.25rem;
+  color: white;
+}
+
+.toastHeader {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.toastHeader button {
+  color: white;
+  opacity: 1;
+  padding: 0;
+  margin-top: -1px !important;
+  text-shadow: none;
+}
+
+.toastHeader span {
+  color: white;
+  opacity: 1;
+  margin: 0;
+  padding: 0;
+  margin-top: -1px !important;
+}
+
+.toastHeader button:hover {
+  color: black;
+  opacity: 1;
+}
+
+.toastHeader span:hover {
+  color: black;
+  opacity: 1;
+}
+
+.toastBody {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.2rem;
+}

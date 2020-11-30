@@ -18,3 +18,19 @@
 .outputHeader {
   margin-bottom: 1rem;
 }
+
+.outputMessageRow {
+  margin-bottom: 1rem;
+}
+
+.outputMessageWrapper {
+  width: 100%;
+  position: relative;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+}
+
+.outputMessageWrapper p:last-child {
+  margin-bottom: 0;
+}
