@@ -83,7 +83,7 @@ const FormOutput = (props) => {
     }
     else {
       return (
-        <div className={styles.explanationLoadingWrapper}></div>
+        <div className={styles.explanationLoadingWrapper}>No data to show</div>
       );
     }
   }
@@ -186,7 +186,7 @@ const FormOutput = (props) => {
       <p>We also provide a graph of the query plan's execution, and a natural langauge explanation. Click on the nodes in the graph for more information about each node.</p>
       <hr />
       <br />
-      <h3 style={{ textAlign: "center" }}>Was the original plan the best plan?</h3>
+      <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>Was the original plan the best plan?</h3>
       <Form.Row className={styles.outputMessageRow}>
         <Form.Group as={Col} controlId="formOutputMessage">
           <div className={styles.outputMessageWrapper}>
