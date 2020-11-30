@@ -12,7 +12,7 @@ def visualize_explain_query(plan):
         queue = []
         visited = []
 
-        unique_id = "A"
+        unique_id = 1
 
         explanation = ""
 
@@ -20,11 +20,13 @@ def visualize_explain_query(plan):
 
         if "Plan" in plan:
             root = plan["Plan"]
-            root["id"] = unique_id
+            root["id"] = string_unique_id(unique_id)
             root["depth"] = 0
-            root_node = unique_id
+            root_node = string_unique_id(unique_id)
 
-            unique_id = chr(ord(unique_id) + 1)
+            # unique_id = chr(ord(unique_id) + 1)
+            unique_id += 1
+            # unique_id = get_next_unique_id(unique_id)
 
             queue.append(root)
 
@@ -45,9 +47,11 @@ def visualize_explain_query(plan):
                     
                     for child in curr["Plans"]:
                         if child not in visited:
-                            child["id"] = unique_id
+                            child["id"] = string_unique_id(unique_id)
                             child["depth"] = depth
-                            unique_id = chr(ord(unique_id) + 1)
+                            # unique_id = chr(ord(unique_id) + 1)
+                            # unique_id = get_next_unique_id(unique_id)
+                            unique_id += 1
                             queue.append(child)
                             children.append(child)
 
@@ -60,18 +64,16 @@ def visualize_explain_query(plan):
 
                             graph.add_edge(curr["id"], child["id"])
 
-                    # print(explanation, file=stderr)
-                    # print(curr["Node Type"], file=stderr)
-                    # print(children, file=stderr)
-                    # print(curr["id"], file=stderr)
                     explanation = craft_explanation_string(explanation, curr["Node Type"], children, curr["id"])
 
                 # If we reach here, we are at a leaf node, add the table itself to the graph
                 else:
                     table = {}
-                    table["id"] = unique_id
+                    table["id"] = string_unique_id(unique_id)
                     table["depth"] = curr["depth"] + 1
-                    unique_id = chr(ord(unique_id) + 1)
+                    # unique_id = chr(ord(unique_id) + 1)
+                    # unique_id = get_next_unique_id(unique_id)
+                    unique_id += 1
                     
                     graph.add_node(
                         table["id"],
@@ -87,13 +89,10 @@ def visualize_explain_query(plan):
             # Return graph as JSON
             data = json_graph.node_link_data(graph)
             
-            
-            # Format the explanation to go from leaf to root
+            # Format the explanation to go from leaf to root. We return a list. The last element is an empty string, so pop it first
             explanation = explanation.split(".")
             explanation.pop(-1)
             explanation.reverse()
-            print("=" * 50, file=stderr)
-            print("explanation:", explanation, file=stderr)
 
             return data, explanation
         else:
@@ -102,6 +101,9 @@ def visualize_explain_query(plan):
         raise Exception("Error in visualize_query() - unable to get the graph for the query")
 
 
+""" #################################################################### 
+Crafts the explanation string for the graph
+#################################################################### """
 def craft_explanation_string(explanation, node_type, child_names, curr_name):
     try:
         explanation += node_type + " "
@@ -147,3 +149,10 @@ def craft_explanation_string(explanation, node_type, child_names, curr_name):
         return explanation
     except:
         raise Exception("Error in craft_explanation_string() - unable to generate text explanation of graph")
+
+
+""" #################################################################### 
+Generates a unique ID (running character sequence) for nodes as a string
+#################################################################### """
+def string_unique_id(unique_id):
+    return "T" + str(unique_id)
