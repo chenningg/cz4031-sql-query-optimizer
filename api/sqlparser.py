@@ -276,28 +276,38 @@ class SQLParser:
             )
 
     def nested_query(self, sql): 
-        select_index = []
-        splitted_word_sql = sql.split(" ")
-        
-        for i, word in enumerate(splitted_word_sql): 
-            if word == 'select\n' or word =='SELECT\n':
-                select_index.append(i)
-        if len(select_index) == 2: 
-            start_index = int(select_index[1])
-            end_index = int(select_index[1])
-            while not splitted_word_sql[start_index].startswith('('):
-                start_index -= 1  
-            flag = False
-            for i in range(start_index, start_index-3, -1): 
-                if splitted_word_sql[i] in range_comparators:
-                    flag = True
-            if flag:
-                start_part = splitted_word_sql[start_index][2:] if len(splitted_word_sql[start_index]) > 1 else splitted_word_sql[start_index]
-                while not splitted_word_sql[end_index].startswith(')'): 
-                    end_index += 1
-                end_part = splitted_word_sql[end_index][1:] if len(splitted_word_sql[end_index]) > 1 else splitted_word_sql[end_index]
-                return " ".join(splitted_word_sql[:start_index] + [start_part]+ ['100'] + [end_part]+splitted_word_sql[end_index+1:])
-        return sql
-    
+        try:
+            select_index = []
+            splitted_word_sql = sql.split(" ")
+            
+            for i, word in enumerate(splitted_word_sql): 
+                if word == 'select\n' or word =='SELECT\n':
+                    select_index.append(i)
+            if len(select_index) == 2: 
+                start_index = int(select_index[1])
+                end_index = int(select_index[1])
+                while not splitted_word_sql[start_index].startswith('('):
+                    start_index -= 1  
+                flag = False
+                for i in range(start_index, start_index-3, -1): 
+                    if splitted_word_sql[i] in range_comparators:
+                        flag = True
+                if flag:
+                    start_part = splitted_word_sql[start_index][2:] if len(splitted_word_sql[start_index]) > 1 else splitted_word_sql[start_index]
+                    while not splitted_word_sql[end_index].startswith(')'): 
+                        end_index += 1
+                    end_part = splitted_word_sql[end_index][1:] if len(splitted_word_sql[end_index]) > 1 else splitted_word_sql[end_index]
+                    return " ".join(splitted_word_sql[:start_index] + [start_part]+ ['100'] + [end_part]+splitted_word_sql[end_index+1:])
+            return sql
+        except CustomError as e:
+            raise CustomError(str(e))
+        except:
+            raise CustomError("Error in nested_query() - Unable to parse the nested query. Have mercy and give us something less nested please.")
+
     def remove_double_spacing(self, sql): 
-        return sql.replace('  ', '')
+        try:
+            return sql.replace('  ', '')
+        except CustomError as e:
+            raise CustomError(str(e))
+        except:
+            raise CustomError("Error in remove_double_spacing() - Unable to remove double spacing.")
