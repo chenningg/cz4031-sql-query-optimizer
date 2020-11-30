@@ -104,8 +104,7 @@ def visualize_explain_query(plan):
     except CustomError as e:
         raise CustomError(str(e))
     except:
-        # raise Exception("Error in visualize_explain_query() - unable to get the graph and explanation for the query")
-        raise CustomError("Error in visualize_explain_query() - unable to get the graph and explanation for the query")
+        raise CustomError("Error in visualize_explain_query() - unable to get the graph and explanation for the query.")
 
 
 """ #################################################################### 
@@ -159,7 +158,7 @@ def craft_explanation_string(explanation, node_type, child_names, curr_name):
     except CustomError as e:
         raise CustomError(str(e))        
     except:
-        raise CustomError("Error in craft_explanation_string() - unable to generate text explanation of graph")
+        raise CustomError("Error in craft_explanation_string() - unable to generate text explanation of graph.")
 
 
 """ #################################################################### 
@@ -171,4 +170,4 @@ def string_unique_id(unique_id):
     except CustomError as e:
         raise CustomError(str(e))
     except:
-        raise CustomError("Error in string_unique_id() - unable to generate unique id")        
+        raise CustomError("Error in string_unique_id() - unable to generate unique id.")        

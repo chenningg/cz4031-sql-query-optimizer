@@ -33,7 +33,7 @@ def connect():
     except:
         if conn is not None:
             conn.close()
-        raise CustomError("Error in connect() - database connection error")
+        raise CustomError("Error in connect() - database connection error.")
 
 
 """ #################################################################### 
@@ -59,7 +59,7 @@ def query(sql_string, explain=False):
     except CustomError as e:
         raise CustomError(str(e))               
     except:
-        raise CustomError("Error in query() - database has problem executing query, check your SQL syntax")
+        raise CustomError("Error in query() - database has problem executing query, check your SQL syntax.")
 
 
 """ #################################################################### 
@@ -77,4 +77,4 @@ def calculate_estimated_cost_per_row(qep):
     except CustomError as e:
         raise CustomError(str(e))           
     except:
-        raise CustomError("Error in calculate_estimated_cost_per_row() - unable to calculate estimated costs")
+        raise CustomError("Error in calculate_estimated_cost_per_row() - unable to calculate estimated costs.")

@@ -53,7 +53,7 @@ class Generator:
         except CustomError as e:
             raise CustomError(str(e))               
         except:
-            raise CustomError("Error in generate_plans() - unable to generate plans for required selectivity variations")
+            raise CustomError("Error in generate_plans() - unable to generate plans for required selectivity variations.")
     
     def generate_ranges(self, lessthan_histogram_bounds, morethan_histogram_bounds): # for selectivities with more than 2 conditions (i.e. range)
         try:
@@ -64,7 +64,7 @@ class Generator:
         except CustomError as e:
             raise CustomError(str(e))               
         except:
-            raise CustomError("Error in generate_ranges() - unable to generate the required histogram bounds")
+            raise CustomError("Error in generate_ranges() - unable to generate the required histogram bounds.")
 
     def find_and_replace(self, predicate, operator, old_val, new_val, sql_query): 
         try:
@@ -77,4 +77,4 @@ class Generator:
         except CustomError as e:
             raise CustomError(str(e))               
         except:
-            raise CustomError("Error in find_and_replace() - unable to replace the original attribute value with new one")
+            raise CustomError("Error in find_and_replace() - unable to replace the original attribute value with new one.")
