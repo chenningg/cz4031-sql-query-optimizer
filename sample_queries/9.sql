@@ -11,10 +11,3 @@ where
 	l_partkey = p_partkey
 	and l_shipdate >= date '1993-11-01'
 limit 1;
-
-select 
-    *
-from 
-    lineitem
-where
-    l_extendedprice > 5000
