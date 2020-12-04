@@ -11,6 +11,7 @@
     "start-frontend": "cd ./frontend && yarn start"
   },
   "dependencies": {
+    "concurrently": "^5.3.0",
     "pipeline": "^0.1.3"
   }
 }
